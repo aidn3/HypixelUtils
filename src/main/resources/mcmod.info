@@ -1,0 +1,16 @@
+[
+{
+  "modid": "hypixelutils",
+  "name": "Hypixel Utils",
+  "description": "Best Library.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["aidn5"],
+  "credits": "JUST ME",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
