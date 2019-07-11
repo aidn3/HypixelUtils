@@ -1,6 +1,7 @@
 
 package com.aidn5.hypixelutils.v1.eventslistener;
 
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +15,8 @@ import com.aidn5.hypixelutils.v1.common.ListenerBus;
 import com.aidn5.hypixelutils.v1.eventslistener.HypixelApiListener.HypixelApiCallback;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -73,6 +76,13 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
 
     if (api != null) {
 
+      if (hypixelUtils.isDefaultInstance()) {
+
+        hypixelUtils.threadPool.submit(() -> {
+          MinecraftForge.EVENT_BUS.post(new HypixelApiEvent(api));
+        });
+      }
+
       for (HypixelApiCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
           listener.onHypixelApiUpdate(api);
@@ -103,5 +113,33 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
      * @since 1.0
      */
     public void onHypixelApiUpdate(@Nonnull UUID hypixelApi);
+  }
+
+  /**
+   * event which is only called in the default instance of {@link HypixelUtils}.
+   * 
+   * @author aidn5
+   * 
+   * @since 1.0
+   * @version 1.0
+   * 
+   * @category Event
+   */
+  public static class HypixelApiEvent extends Event {
+    @Nonnull
+    private final UUID hypixelApi;
+
+    private HypixelApiEvent(@Nonnull UUID hypixelApi) {
+      this.hypixelApi = Objects.requireNonNull(hypixelApi);
+    }
+
+    /**
+     * get Hypixel's API.
+     * 
+     * @return Hypixel's API.
+     */
+    public UUID getHypixelApi() {
+      return hypixelApi;
+    }
   }
 }

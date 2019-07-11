@@ -23,8 +23,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiPlayerTabOverlay;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.util.IChatComponent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
@@ -121,6 +123,13 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
       @Nullable VerificationMethod method) {
     if (onHypixel != isOnlineHypixelNetwork) {
       isOnlineHypixelNetwork = onHypixel;
+
+      if (hypixelUtils.isDefaultInstance()) {
+
+        hypixelUtils.threadPool.submit(() -> {
+          MinecraftForge.EVENT_BUS.post(new OnHypixelEvent(onHypixel, ip, method));
+        });
+      }
 
       for (OnHypixelCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
@@ -364,5 +373,65 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
      * by its icon.
      */
     FAVICON
+  }
+
+  /**
+   * event which is only called in the default instance of {@link HypixelUtils}.
+   * 
+   * @author aidn5
+   *
+   * @since 1.0
+   * @version 1.0
+   * 
+   * @category Event
+   */
+  public static class OnHypixelEvent extends Event {
+    private final boolean onHypixel;
+    @Nullable
+    private final String ip;
+    @Nullable
+    private final VerificationMethod method;
+
+    private OnHypixelEvent(
+        boolean onHypixel, @Nullable String ip, @Nullable VerificationMethod method) {
+      this.onHypixel = onHypixel;
+      this.ip = ip;
+      this.method = method;
+    }
+
+    /**
+     * Whether the client is online Hypixel or not.
+     * 
+     * @return
+     *         true if the client is online hypixel network.
+     */
+    public boolean isOnHypixel() {
+      return onHypixel;
+    }
+
+    /**
+     * The IP the client is on. If <code>null</code>,
+     * it means the client is not connected to any server.
+     * 
+     * @return
+     *         The IP the client is on or <code>null</code>.
+     */
+    @Nullable
+    public String getIp() {
+      return ip;
+    }
+
+    /**
+     * The method used to verify that the client is on Hypixel, or null
+     * if not on hypixel.
+     * 
+     * @return
+     *         The method used to verify that the client is on Hypixel,
+     *         or null if not on hypixel.
+     */
+    @Nullable
+    public VerificationMethod getMethod() {
+      return method;
+    }
   }
 }

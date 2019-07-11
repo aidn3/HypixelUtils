@@ -38,6 +38,9 @@ import com.aidn5.hypixelutils.v1.tools.buffer.MessageBuffer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 /**
@@ -126,8 +129,8 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * @category ChatReader
  *
  */
-// TODO: add EVENT BUS to this class and use it for listeners.
 // TODO: add guild coins members.
+@Mod(modid = "hypixelutils", name = "HypixelUtils", version = "1.0", clientSideOnly = true)
 public final class HypixelUtils {
   /**
    * a Provided instance of the library
@@ -265,6 +268,22 @@ public final class HypixelUtils {
       return this;
     } catch (Throwable e) {
       throw new HypixelUtilsInternalError(e);
+    }
+  }
+
+  /**
+   * Initialize the library by using the EventHandler to call it.
+   * 
+   * @param event
+   *          the event which is given by forge.
+   */
+  @EventHandler
+  public static void preInitForgeEvent(FMLPreInitializationEvent event) {
+    HypixelUtils ht = HypixelUtils.defaultInstance();
+
+    if (!ht.isDefaultInstance()) {
+      throw new RuntimeException(
+          "HypixelUtils#defaultInstance() should have returned a default instance");
     }
   }
 

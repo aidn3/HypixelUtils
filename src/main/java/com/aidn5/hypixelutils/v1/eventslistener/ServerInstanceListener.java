@@ -18,6 +18,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -77,7 +78,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * get the saved server instance
    * since the last time is requested (every time when the world changes).
    * 
-   * @return the serverInstance (probably up-to-date).
+   * @return the serverInstance (mostly up-to-date).
    *         <u>Never <code>null</code></u>
    * 
    * @since 1.0
@@ -116,6 +117,12 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
     if (!this.lastServerInstance.equals(serverInstance)) {
       this.lastServerInstance = serverInstance;
 
+      if (hypixelUtils.isDefaultInstance()) {
+        hypixelUtils.threadPool.submit(() -> {
+          MinecraftForge.EVENT_BUS.post(new ServerInstanceEvent(serverInstance));
+        });
+      }
+
       for (ServerInstanceCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
           listener.onServerInstanceUpdate(serverInstance);
@@ -146,5 +153,33 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
      * @since 1.0
      */
     void onServerInstanceUpdate(ServerInstance si);
+  }
+
+  /**
+   * event which is only called in the default instance of {@link HypixelUtils}.
+   * 
+   * @author aidn5
+   *
+   * @since 1.0
+   * @version 1.0
+   * 
+   * @category Event
+   */
+  public static class ServerInstanceEvent extends Event {
+    private final ServerInstance serverInstance;
+
+    private ServerInstanceEvent(@Nonnull ServerInstance st) {
+      this.serverInstance = st;
+    }
+
+    /**
+     * get the saved server instance.
+     * 
+     * @return get the saved server instance.
+     */
+    @Nonnull
+    public ServerInstance getServerInstance() {
+      return serverInstance;
+    }
   }
 }
