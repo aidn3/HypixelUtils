@@ -35,7 +35,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * @version 1.0
  * 
  * @author robere2
- * @link https://github.com/robere2/QuickPlay/blob/master/src/main/java/co/bugg/quickplay/util/TickDelay.java
+ * @see "https://github.com/robere2/QuickPlay/blob/master/src/main/java/co/bugg/quickplay/util/TickDelay.java"
  * @license https://github.com/robere2/QuickPlay/blob/master/LICENSE
  */
 public class TickDelay {

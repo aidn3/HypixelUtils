@@ -4,21 +4,20 @@ package com.aidn5.hypixelutils.v1.eventslistener;
 import javax.annotation.Nonnull;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatreader.WhereAmIWrapper;
-import com.aidn5.hypixelutils.v1.chatreader.WhereAmIWrapper.WhereAmICallback;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper.WhereAmICallback;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.VerificationMethod;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener.ServerInstanceCallback;
-import com.aidn5.hypixelutils.v1.server.ServerInstance;
-import com.aidn5.hypixelutils.v1.server.ServerType;
+import com.aidn5.hypixelutils.v1.serverinstance.ServerInstance;
+import com.aidn5.hypixelutils.v1.serverinstance.ServerType;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -34,9 +33,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @version 1.0
  * @since 1.0
  * 
- * @category EventListener
- * @category Utils
- * @category ChatReader
+ * @category ListenerBus
+ * @category
  */
 public final class ServerInstanceListener extends ListenerBus<ServerInstanceCallback> {
   @Nonnull
@@ -64,7 +62,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
 
     hypixelUtils.getOnHypixelListener().register(new OnHypixelCallback() {
       @Override
-      public void run(boolean onHypixel, String ip, VerificationMethod method) {
+      public void onOnHypixelUpdate(boolean onHypixel, String ip, VerificationMethod method) {
         if (onHypixel) {
           MinecraftForge.EVENT_BUS.register(ServerInstanceListener.this);
           new WhereAmIWrapper(callback, hypixelUtils);
@@ -118,13 +116,9 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
     if (!this.lastServerInstance.equals(serverInstance)) {
       this.lastServerInstance = serverInstance;
 
-      hypixelUtils.threadPool.submit(() -> {
-        MinecraftForge.EVENT_BUS.post(new ServiceInstanceEvent(serverInstance));
-      });
-
       for (ServerInstanceCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
-          listener.callback(serverInstance);
+          listener.onServerInstanceUpdate(serverInstance);
         });
       }
     }
@@ -146,43 +140,11 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
      * callback on a separate thread
      * when listener is triggered.
      * 
-     * @param serverInstance
+     * @param si
      *          an instance which contains all the parsed information.
      * 
      * @since 1.0
      */
-    void callback(ServerInstance serverInstance);
-  }
-
-  /**
-   * a forge event called when the status is updated.
-   * 
-   * @author aidn5
-   * 
-   * @version 1.0
-   * @since 1.0
-   *
-   * @category Event
-   */
-  public static class ServiceInstanceEvent extends Event {
-    @Nonnull
-    private final ServerInstance serverInstance;
-
-    private ServiceInstanceEvent(@Nonnull ServerInstance serverInstance) {
-      this.serverInstance = serverInstance;
-    }
-
-    /**
-     * return an instance which contains all the parsed information.
-     * 
-     * @return
-     *         an instance which contains all the parsed information.
-     * 
-     * @since 1.0
-     */
-    @Nonnull
-    public ServerInstance getServerInstance() {
-      return serverInstance;
-    }
+    void onServerInstanceUpdate(ServerInstance si);
   }
 }

@@ -1,5 +1,5 @@
 
-package com.aidn5.hypixelutils.v1.chatreader;
+package com.aidn5.hypixelutils.v1.chatwrapper;
 
 import java.util.regex.Matcher;
 
@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
-import com.aidn5.hypixelutils.v1.server.ServerType;
+import com.aidn5.hypixelutils.v1.serverinstance.ServerType;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -50,16 +50,18 @@ public class WhereAmIWrapper {
    * 
    * @param callback
    *          Callback when this wrapper finds a /whereami message
+   * @param hypixelUtils
+   *          a library instance.
    * 
    * @throws NotOnHypixelNetwork
    *           if the client was not connected to the hypixel network
    */
-  public WhereAmIWrapper(@Nullable WhereAmICallback callback, HypixelUtils hypixelUtils)
+  public WhereAmIWrapper(@Nullable WhereAmICallback callback, @Nonnull HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {
     if (!hypixelUtils.onHypixel()) {
       throw new NotOnHypixelNetwork();
     }
-    
+
     this.callback = callback;
     this.hypixelUtils = hypixelUtils;
     MinecraftForge.EVENT_BUS.register(this);
@@ -75,7 +77,7 @@ public class WhereAmIWrapper {
    * and {@link #callback} if {@link #callbackSent} is still <code>false</code>.
    */
   public void stopListening() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+    MinecraftForge.EVENT_BUS.unregister(this);
 
     if (!callbackSent && callback != null) {
       callbackSent = true;
@@ -91,7 +93,7 @@ public class WhereAmIWrapper {
     hypixelUtils.chatBuffer.add("/whereami");
   }
 
-  @SubscribeEvent(priority = EventPriority.LOW)
+  @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
   public void onPlayerChat(ClientChatReceivedEvent event) {
     if (event == null || event.type != 0 || !hypixelUtils.onHypixel()) {
       return;

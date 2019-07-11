@@ -6,8 +6,10 @@ package com.aidn5.hypixelutils.v1.exceptions;
  * 
  * 
  * @author aidn5
+ * 
  * @version 1.0
  * @since 1.0
+ * 
  * @category Exception
  */
 public class HypixelUtilsInternalError extends RuntimeException {

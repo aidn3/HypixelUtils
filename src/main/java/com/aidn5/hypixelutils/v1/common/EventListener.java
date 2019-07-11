@@ -1,3 +1,4 @@
+
 package com.aidn5.hypixelutils.v1.common;
 
 /**
@@ -12,7 +13,5 @@ package com.aidn5.hypixelutils.v1.common;
  * 
  * @version 1.0
  * @since 1.0
- * 
- * @category EventListener
  */
 public interface EventListener {}

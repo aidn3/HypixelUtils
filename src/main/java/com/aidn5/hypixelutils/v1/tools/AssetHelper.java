@@ -37,7 +37,6 @@ public class AssetHelper {
    * @throws IOException
    *           if an I/O error occurs
    * 
-   * @author aidn5
    * @since 1.0
    */
   @Nonnull
@@ -58,7 +57,6 @@ public class AssetHelper {
    * @throws IOException
    *           if an I/O error occurs
    * 
-   * @author aidn5
    * @since 1.0
    */
   @Nonnull

@@ -1,76 +1,109 @@
 
 package com.aidn5.testpackage;
 
-import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener;
-import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.VerificationMethod;
-import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener.ServiceInstanceEvent;
-import com.aidn5.hypixelutils.v1.server.GameMode;
-import com.aidn5.hypixelutils.v1.server.LobbyType;
-import com.aidn5.hypixelutils.v1.server.ServerInstance;
+import java.awt.Color;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
+import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.VerificationMethod;
+import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener.ServerInstanceCallback;
+import com.aidn5.hypixelutils.v1.serverinstance.GameMode;
+import com.aidn5.hypixelutils.v1.serverinstance.LobbyType;
+import com.aidn5.hypixelutils.v1.serverinstance.ServerInstance;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ChatComponentText;
 import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-@Mod(modid = TestPackage.MOD_ID, name = TestPackage.MOD_NAME, version = TestPackage.VERSION, clientSideOnly = true)
-public class TestPackage {
-  public static final String MOD_ID = "testpackage";
-  public static final String MOD_NAME = "Test Package";
-  public static final String VERSION = "1.0";
-
+@Mod(modid = "testmod", name = "TestMod", version = "1.0", clientSideOnly = true)
+public class TestPackage implements ServerInstanceCallback, OnHypixelCallback {
   public static final HypixelUtils hypixelUtils = HypixelUtils.defaultInstance();
+  private ServerInstance lastSI;
 
   @EventHandler
-  public static void init(FMLInitializationEvent event) {
+  public void init(FMLInitializationEvent event) {
     ClientCommandHandler.instance.registerCommand(new Command());
 
-    hypixelUtils.getOnHypixelListener().register(
-        (boolean onHypixel, String ip, VerificationMethod method) -> {
-          String message = onHypixel ? "hi hypixel server" : "bye hypixel 7u7";
-          System.out.println(onHypixel + " onHypixel");
+    hypixelUtils.getOnHypixelListener().register(this);
+    hypixelUtils.getServerInstanceListener().register(this);
 
-          hypixelUtils.messageBuffer.offer(new ChatComponentText(message));
-        });
-
-    hypixelUtils.getServerInstanceListener().register((st) -> {
-      String text = st.getServerType().name() + ":" + st.getServerId() + ":" + st.isLimbo()
-          + ", " + st.getLobbyType().name() + ":" + st.getLobbyNumber() + ":" + st.isLobby()
-          + ", " + st.getGameMode().name() + ":" + st.isGame();
-
-      System.out.println(text);
-      hypixelUtils.messageBuffer.offer(new ChatComponentText(text));
-    });
-
-    hypixelUtils.getServerInstanceListener().register((st) -> {
-      if (st.isGame() && st.getGameMode().equals(GameMode.BED_WARS)) {
-        // do something in a bedwars game
+    new Timer(true).scheduleAtFixedRate(new TimerTask() {
+      @Override
+      public void run() {
+        lastSI = ServerInstance.createDummyServerInstance();
       }
+    }, 500, 10000);
 
-      if (st.isLobby() && st.getLobbyType().equals(LobbyType.MAIN_LOBBY)) {
-        // player is in the main lobby :)
-      }
-
-      if (st.isLimbo()) {
-        // Being on limbo makes you feel AFK :)
-      }
-    });
+    MinecraftForge.EVENT_BUS.register(this);
   }
 
-  @SubscribeEvent
-  public void serverChange(ServiceInstanceEvent event) {
-    ServerInstance st = event.getServerInstance();
+  @Override
+  public void onServerInstanceUpdate(ServerInstance si) {
+    this.lastSI = si;
+    if (si.isGame() && si.getGameMode().equals(GameMode.BED_WARS)) {
+      // do something in a bedwars game
+    }
 
-    if (st.isLimbo()) {
-      // do something in limbo.
+    if (si.isLobby() && si.getLobbyType().equals(LobbyType.MAIN_LOBBY)) {
+      // player is in the main lobby :)
+    }
+
+    if (si.isLimbo()) {
+      // Being on limbo makes you feel AFK :)
+    }
+  }
+
+  @Override
+  public void onOnHypixelUpdate(boolean onHypixel, String ip, VerificationMethod method) {
+    System.out.println(onHypixel + " onHypixel");
+    if (onHypixel) {
+      hypixelUtils.messageBuffer.offer(new ChatComponentText("hi hypixel network!"));
+    } else {
+      hypixelUtils.messageBuffer.offer(new ChatComponentText("bye hypixel :("));
     }
   }
 
   @SubscribeEvent
-  public void onHypixel(OnHypixelListener.OnHypixelEvent event) {
-    boolean onHypixel = event.isOnHypixel();
+  public void onRenderOverlay(RenderGameOverlayEvent event) {
+    if (hypixelUtils.onHypixel() || true) {
+      if (event.type == RenderGameOverlayEvent.ElementType.TEXT) {
+
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.currentScreen == null) {
+          if (lastSI != null) {
+            String place;
+            String type;
+
+            if (lastSI.isGame()) {
+              place = "Game";
+              type = lastSI.getGameMode().getDisplayGameName();
+            } else if (lastSI.isLobby()) {
+              place = "Lobby";
+              type = lastSI.getLobbyType().getDisplayName();
+            } else if (lastSI.isLimbo()) {
+              place = "Limbo";
+              type = "";
+            } else {
+              place = "Unknown";
+              type = "N/A";
+            }
+
+            mc.ingameGUI.drawCenteredString(mc.fontRendererObj,
+                lastSI.getServerType().name() + "." + lastSI.getServerId()
+                    + " " + place + ":" + type,
+                new ScaledResolution(mc).getScaledWidth() / 2, 10, Color.WHITE.getRGB());
+          }
+        }
+      }
+    }
   }
 }

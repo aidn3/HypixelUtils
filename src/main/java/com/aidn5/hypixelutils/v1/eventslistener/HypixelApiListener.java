@@ -14,8 +14,6 @@ import com.aidn5.hypixelutils.v1.common.ListenerBus;
 import com.aidn5.hypixelutils.v1.eventslistener.HypixelApiListener.HypixelApiCallback;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -30,7 +28,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @since 1.0
  * 
  * @category ChatReader
- * @category EventsListener
+ * @category ListenerBus
  */
 public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
   @Nonnull
@@ -75,13 +73,9 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
 
     if (api != null) {
 
-      hypixelUtils.threadPool.submit(() -> {
-        MinecraftForge.EVENT_BUS.post(new HypixelApiEvent(api));
-      });
-
       for (HypixelApiCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
-          listener.call(api);
+          listener.onHypixelApiUpdate(api);
         });
       }
     }
@@ -108,35 +102,6 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
      * 
      * @since 1.0
      */
-    public void call(@Nonnull UUID hypixelApi);
-  }
-
-  /**
-   * a forge event called when the status is updated.
-   * 
-   * @author aidn5
-   *
-   * @version 1.0
-   * @since 1.0
-   *
-   * @category Event
-   */
-  public static class HypixelApiEvent extends Event {
-    @Nonnull
-    private final UUID hypixelApi;
-
-    private HypixelApiEvent(@Nonnull UUID hypixelApi) {
-      this.hypixelApi = hypixelApi;
-    }
-
-    /**
-     * get Hypixel's API.
-     * 
-     * @return last detected API.
-     */
-    @Nonnull
-    public UUID getHypixelApi() {
-      return hypixelApi;
-    }
+    public void onHypixelApiUpdate(@Nonnull UUID hypixelApi);
   }
 }

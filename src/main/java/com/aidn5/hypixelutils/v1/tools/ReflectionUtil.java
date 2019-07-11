@@ -95,9 +95,9 @@ public class ReflectionUtil extends ReflectionHelper {
   @Nonnull
   public static <T> T newInstance(@Nonnull Class<T> clazz)
       throws ReflectiveOperationException {
-    Constructor c = clazz.getDeclaredConstructor();
+    Constructor<T> c = clazz.getDeclaredConstructor();
     c.setAccessible(true);
-    return (T) c.newInstance();
+    return c.newInstance();
   }
 
   /**

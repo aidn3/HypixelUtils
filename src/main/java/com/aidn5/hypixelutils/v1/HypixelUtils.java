@@ -1,6 +1,7 @@
 
 package com.aidn5.hypixelutils.v1;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -10,21 +11,24 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.aidn5.hypixelutils.v1.chatreader.IgnoreListWrapper;
-import com.aidn5.hypixelutils.v1.chatreader.MapWrapper;
-import com.aidn5.hypixelutils.v1.chatreader.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.IgnoreListWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.MapWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.cache.JsonCacher;
 import com.aidn5.hypixelutils.v1.eventslistener.HypixelApiListener;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 import com.aidn5.hypixelutils.v1.exceptions.HypixelUtilsInternalError;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
-import com.aidn5.hypixelutils.v1.server.ServerInstance;
+import com.aidn5.hypixelutils.v1.players.Usernames;
+import com.aidn5.hypixelutils.v1.serverinstance.ServerInstance;
 import com.aidn5.hypixelutils.v1.tools.AssetHelper;
 import com.aidn5.hypixelutils.v1.tools.ReflectionUtil;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
@@ -98,6 +102,8 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * <li>{@link TickDelay}</li>
  * <li>{@link ReflectionUtil}</li>
  * <li>{@link AssetHelper}</li>
+ * <li>{@link Usernames}</li>
+ * <li>{@link JsonCacher}</li>
  * </ul>
  * 
  * <p>
@@ -120,12 +126,13 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * @category ChatReader
  *
  */
-@SuppressWarnings("ucd")
+// TODO: add EVENT BUS to this class and use it for listeners.
+// TODO: add guild coins members.
 public final class HypixelUtils {
   /**
    * a Provided instance of the library
    * used to register listeners, push elements to the buffer
-   * and to execute code blocks/
+   * and to execute code blocks.
    */
   // idea make a shared instance between a the mods.
   // so all mods work together
@@ -145,6 +152,15 @@ public final class HypixelUtils {
    */
   @Nonnull
   public static final String VERSION = "1.0";
+  /**
+   * the modid which created this instance.
+   * if <code>null</code> then this instance is the default shared instance.
+   * 
+   * <p>
+   * Useful when creating private settings and files.
+   */
+  @Nullable
+  private final String modidForInstance;
 
   /**
    * Thread pool for blocking code.
@@ -160,7 +176,7 @@ public final class HypixelUtils {
    * 
    * @since 1.0
    * 
-   * @see Queue#offer(String)
+   * @see Queue#offer(Object)
    */
   @Nonnull
   public final ChatBuffer chatBuffer = new ChatBuffer(5000, 100, threadPool);
@@ -169,7 +185,7 @@ public final class HypixelUtils {
    * 
    * @since 1.0
    * 
-   * @see Queue#offer(String)
+   * @see Queue#offer(Object)
    */
   @Nonnull
   public final MessageBuffer messageBuffer = new MessageBuffer(5000, 100, threadPool);
@@ -188,21 +204,36 @@ public final class HypixelUtils {
    * 
    * @return a shared instance.
    */
+  @Nonnull
   public static HypixelUtils defaultInstance() {
     if (INSTANCE == null) {
-      INSTANCE = newInstance();
+      HypixelUtils ht = new HypixelUtils(null);
+      INSTANCE = ht.initHypixelUtils();
     }
+
     return INSTANCE;
   }
 
-  public static HypixelUtils newInstance() {
-    return new HypixelUtils().initHypixelUtils();
+  @Nonnull
+  public static HypixelUtils newInstance(@Nonnull String modid) {
+    if (modid == null | modid.isEmpty()) {
+      throw new IllegalArgumentException("modid can not be null");
+    }
+
+    HypixelUtils ht = new HypixelUtils(modid);
+    return ht.initHypixelUtils();
   }
 
-  private HypixelUtils() {}
+  private HypixelUtils(@Nullable String modid) {
+    this.modidForInstance = modid;
+  }
 
   private HypixelUtils initHypixelUtils() {
     try {
+      // start tracking the usage of this library.
+      // see StatisticMod
+      // StatisticMod.registerMod("hypixelUtils", VERSION);
+
       // create instances of the services and listeners
       // note: these listeners MUST be created in this sequence!
       Constructor<OnHypixelListener> onC = OnHypixelListener.class
@@ -222,7 +253,7 @@ public final class HypixelUtils {
 
 
       // register the listeners to start receive events
-      // to let them save their result and make them on demand when needed
+      // to let them save data and make the results on demand
       MinecraftForge.EVENT_BUS.register(onHypixelListener);
       MinecraftForge.EVENT_BUS.register(hypixelApiListener);
       MinecraftForge.EVENT_BUS.register(serverInstanceListener);
@@ -237,14 +268,31 @@ public final class HypixelUtils {
     }
   }
 
-  /*
-   * public static void cache(String s) {
-   * CacheBuilder<Object, Object> as = CacheBuilder.newBuilder();
-   * as.initialCapacity(15).expireAfterWrite(10, TimeUnit.MINUTES);
-   * Cache<String, Object> cacher = as.build();
-   * }
+  /**
+   * whether this instance is the shared instance.
+   * 
+   * @return
+   *         true if this instance is the default shared instance.
+   * 
+   * @see #modidForInstance
    */
+  public boolean isDefaultInstance() {
+    return (this.modidForInstance == null);
+  }
 
+  /**
+   * get the id of the mod, which created this instance.
+   * 
+   * @return
+   *         the id of the mod, which created this instance. <code>null</code> if
+   *         this instance is shared/default.
+   * 
+   * @see #modidForInstance
+   */
+  @Nullable
+  public String getModId() {
+    return this.modidForInstance;
+  }
 
   /**
    * Whether the client is currently connected to the Hypixel network.
@@ -339,7 +387,7 @@ public final class HypixelUtils {
    * get the saved server instance
    * since the last time is requested (every time when the world changes).
    * 
-   * @return the serverInstance (probably up-to-date).
+   * @return the serverInstance (mostly up-to-date).
    *         <u>Never <code>null</code></u>
    * 
    * @since 1.0
@@ -423,7 +471,6 @@ public final class HypixelUtils {
    * @throws IOException
    *           if an I/O error occurs
    * 
-   * @author aidn5
    * @since 1.0
    * 
    * @category AssetHelper
@@ -448,7 +495,6 @@ public final class HypixelUtils {
    * @throws IOException
    *           if an I/O error occurs
    * 
-   * @author aidn5
    * @since 1.0
    * 
    * @category AssetHelper
@@ -474,7 +520,6 @@ public final class HypixelUtils {
    * @throws NoSuchFieldException
    *           The field doesn't exist
    * 
-   * @author Buggfroggy
    * @since 1.0
    * 
    * @category ReflectionUtil
@@ -500,7 +545,6 @@ public final class HypixelUtils {
    * @throws NoSuchMethodException
    *           The method doesn't exist
    * 
-   * @author Buggfroggy
    * @since 1.0
    * 
    * @category ReflectionUtil
@@ -525,7 +569,6 @@ public final class HypixelUtils {
    * @throws ReflectiveOperationException
    *           if any reflection error occurs
    * 
-   * @author aidn5
    * @since 1.0
    * 
    * @category ReflectionUtil
@@ -548,7 +591,6 @@ public final class HypixelUtils {
    * @throws IllegalAccessException
    *           Couldn't access the minecraft version for some reason
    * 
-   * @author Buggfroggy
    * @since 1.0
    * 
    * @category ReflectionUtil
@@ -572,7 +614,6 @@ public final class HypixelUtils {
    * @throws NoSuchMethodException
    *           Forge version method doesn't exist for some reason
    * 
-   * @author Buggfroggy
    * @since 1.0
    * 
    * @category ReflectionUtil
@@ -616,5 +657,26 @@ public final class HypixelUtils {
   public static String gameServerTitle(@Nonnull Minecraft mc, @Nullable HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {
     return Scoreboard.gameServerTitle(mc, hypixelUtils);
+  }
+
+  /**
+   * create new instance of {@link JsonCacher}.
+   * 
+   * <p>
+   * if <code>cacheFilePath</code> is null,
+   * {@link #saveCache()} and {@link #loadCache()} will be disabled.
+   * 
+   * @param cacheFilePath
+   *          the path where the cached saved.
+   * @param duration
+   *          the length of time after an entry is created
+   *          that it should be removed
+   * @param durationUnit
+   *          the unit that {@code duration} is expressed in
+   * 
+   */
+  public static <T> JsonCacher<T> newJsonCacher(
+      @Nullable File cacheFilePath, int duration, TimeUnit durationUnit) {
+    return new JsonCacher<T>(cacheFilePath, duration, durationUnit);
   }
 }

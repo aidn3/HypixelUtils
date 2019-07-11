@@ -64,7 +64,7 @@ public abstract class AbNewBuffer<T> extends ArrayBlockingQueue<T> {
    * 
    * @return this
    */
-  public AbNewBuffer start() {
+  public AbNewBuffer<T> start() {
     this.started = true;
     this.threadPool.submit(() -> {
       while (!Thread.currentThread().isInterrupted() && started) {
@@ -100,7 +100,7 @@ public abstract class AbNewBuffer<T> extends ArrayBlockingQueue<T> {
    * 
    * @return this
    */
-  public AbNewBuffer stop() {
+  public AbNewBuffer<T> stop() {
     started = false;
 
     return this;

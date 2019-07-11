@@ -1,5 +1,5 @@
 
-package com.aidn5.hypixelutils.v1.chatreader;
+package com.aidn5.hypixelutils.v1.chatwrapper;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,11 +8,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.server.GameMode;
-import com.aidn5.hypixelutils.v1.server.ServerType;
+import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
-import net.minecraft.world.WorldSettings.GameType;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -20,7 +18,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
  * Wrapper for the <code>/map</code> command on Hypixel and determining the
- * map and game mode the client is playing.
+ * map the client is playing on.
  * 
  * @author aidn5
  * @author Buggfroggy
@@ -37,11 +35,11 @@ public class MapWrapper {
    */
   private boolean listening;
   /**
-   * Whether this wrapper should cancel whereami messages it finds.
+   * Whether this wrapper should cancel map messages it finds.
    */
   private boolean cancel;
   /**
-   * Callback when this wrapper finds a /whereami message.
+   * Callback when this wrapper finds a /map message.
    */
   @Nullable
   private final MapCallback callback;
@@ -54,10 +52,19 @@ public class MapWrapper {
    *
    * @param callback
    *          Callback when this wrapper finds a /map message
+   * @param hypixelUtils
+   *          a library instance.
+   * 
+   * @throws NotOnHypixelNetwork
+   *           if the client was not connected to the hypixel network
    * 
    * @since 1.0
    */
   public MapWrapper(@Nullable MapCallback callback, HypixelUtils hypixelUtils) {
+
+    if (!hypixelUtils.onHypixel()) {
+      throw new NotOnHypixelNetwork();
+    }
 
     MinecraftForge.EVENT_BUS.register(this);
     this.callback = callback;
@@ -65,14 +72,14 @@ public class MapWrapper {
     this.cancel = true;
     this.hypixelUtils = hypixelUtils;
 
-    // Send the /whereami command
+    // Send the /map command
     hypixelUtils.chatBuffer.offer("/whereami");
     // If a /whereami isn't received within 120 ticks (6 seconds),
     // don't cancel the message
     new TickDelay(this::stopCancelling, 120);
 
-    // If a /whereami isn't received within 1200 ticks (60 seconds), stop listening
-    new TickDelay(() -> stopListening(GameMode.UNKNOWN, "", ""), 1200);
+    // If a /map isn't received within 1200 ticks (60 seconds), stop listening
+    new TickDelay(() -> stopListening("", ""), 1200);
   }
 
   /**
@@ -87,20 +94,8 @@ public class MapWrapper {
 
   /**
    * Stop listening for a chat message
-   * and call the callback
-   * 
-   * @param instance
-   *          Current instance to pass to callback
-   * 
-   * @since 1.0
-   */
-
-  /**
-   * Stop listening for a chat message
    * and call the callback.
    * 
-   * @param gameType
-   *          the param to pass to the callback
    * @param mapName
    *          the param to pass to the callback
    * @param fullMessage
@@ -108,15 +103,14 @@ public class MapWrapper {
    * 
    * @since 1.0
    */
-  public void stopListening(@Nonnull GameMode gameType, @Nonnull String mapName,
-      @Nonnull String fullMessage) {
+  public void stopListening(@Nonnull String mapName, @Nonnull String fullMessage) {
     if (listening) {
       this.listening = false;
       MinecraftForge.EVENT_BUS.unregister(this);
 
       if (callback != null) {
         hypixelUtils.threadPool.submit(() -> {
-          callback.call(gameType, mapName, fullMessage);
+          callback.call(mapName, fullMessage);
         });
 
       }
@@ -132,12 +126,11 @@ public class MapWrapper {
 
     final String message = event.message.getUnformattedText();
 
-    Matcher unitedGameModeM = getUnitedPattern().matcher(message);
+    Matcher mapPatternM = getMapPattern().matcher(message);
 
     // find the /map response first.
-    if (hypixelUtils.onHypixel() && unitedGameModeM.find()) {
-      // TODO: fix map wrapper
-      stopListening(GameMode.UNKNOWN, unitedGameModeM.group(1), message);
+    if (hypixelUtils.onHypixel() && mapPatternM.find()) {
+      stopListening(mapPatternM.group(1), message);
 
       if (this.cancel) {
         event.setCanceled(true);
@@ -152,7 +145,7 @@ public class MapWrapper {
    * 
    * @since 1.0
    */
-  public static Pattern getUnitedPattern() {
+  public static Pattern getMapPattern() {
     return Pattern.compile("^You are currently playing on ([a-zA-Z0-9 ]{1,32})");
   }
 
@@ -164,31 +157,19 @@ public class MapWrapper {
    * @author aidn5
    * @version 1.0
    * @since 1.0
-   * @category EventsCallback
    */
   @FunctionalInterface
   public interface MapCallback {
     /**
      * callback on a separate thread when the message is found in the chat.
      * 
-     * <p>
-     * if gameMode is {@link GameMode#UNKNOWN}
-     * and mapName and fullMessage are empty,
-     * it means that the listener could not
-     * find any response in the last 60 seconds.
-     * 
-     * @param gameMode
-     *          what type of game mode is the client playing/connected to.
      * @param mapName
-     *          the map name the client connected to. e.g. "Waterfall",
-     *          "Warehouse". <u>might be empty but never <code>null</code></u>
-     * @param fullMessage
-     *          the message which is used to detect {@link GameType} and mapName.
-     *          Useful for debugging
+     *          the current map the client is playing on.
      *          <u>might be empty but never <code>null</code></u>
-     * 
-     * @see ServerType
+     * @param fullMessage
+     *          the used message to extract the mapName.
+     *          <u>might be empty but never <code>null</code></u>
      */
-    void call(@Nonnull GameMode gameMode, @Nonnull String mapName, @Nonnull String fullMessage);
+    void call(@Nonnull String mapName, @Nonnull String fullMessage);
   }
 }

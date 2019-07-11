@@ -1,19 +1,46 @@
 
-package com.aidn5.hypixelutils.v1.server;
+package com.aidn5.hypixelutils.v1.serverinstance;
 
+import java.util.Objects;
+import java.util.Random;
 import java.util.regex.Matcher;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatreader.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
 
 import net.minecraft.client.Minecraft;
 
+/**
+ * the ServerInstance represents the server the client connected to.
+ * 
+ * <p>
+ * It checks what type of server is the client connected to
+ * on hypixel network. whether the client is connected to lobby,
+ * in limbo or playing a mini-game. It also provide a method
+ * to check the lobby type, the game mode of the mini-game and etc.
+ * 
+ * <p>
+ * Use {@link ServerInstanceListener#getLastServerInstance()}
+ * from {@link HypixelUtils#getServerInstanceListener()}
+ * to get an instance of this class.<br>
+ * You can also create an empty instance by
+ * {@link #ServerInstance()}, new instance with parsed information
+ * by {@link #createInstance(String, Minecraft, HypixelUtils)},
+ * instance with random data with {@link #createDummyServerInstance()} or
+ * create an instance with custom information by {@link Builder}.
+ * 
+ * @author aidn5
+ * 
+ * @since 1.0
+ * @version 1.0
+ */
+// all methods of this class must never return NULL.
 public class ServerInstance {
   @Nonnull
   protected LobbyType lobbyType = LobbyType.UNKNOWN;
@@ -34,6 +61,13 @@ public class ServerInstance {
   /**
    * Create an empty instance with everything either unknown
    * or empty (but never <code>null</code>).
+   * 
+   * <p>
+   * You can also create an instance with information by using {@link Builder}
+   * 
+   * @see Builder
+   * @see #createInstance(String, Minecraft, HypixelUtils)
+   * @see #createDummyServerInstance()
    */
   public ServerInstance() {
     // empty constructor
@@ -125,20 +159,52 @@ public class ServerInstance {
   }
 
   /**
+   * get the server type from the whereami message.
+   * 
+   * @param whereami
+   *          the response from the /whereami command.
+   * 
+   * @return the server the whereami appointed to.
+   *         or {@link ServerType#UNKNOWN} if not found.
+   * 
+   * @since 1.0
+   * 
+   * @see ServerType#getServerTypePattern()
+   * @see WhereAmIWrapper
+   * @see ServerInstanceListener
+   */
+  @Nonnull
+  public static ServerType getServerTypeFromWhereAmI(@Nullable String whereami) {
+    if (whereami == null || whereami.isEmpty()) {
+      return ServerType.UNKNOWN;
+    }
+
+    for (ServerType serverType : ServerType.values()) {
+      if (serverType.getWhereAmIPattern().matcher(whereami).find()) {
+        return serverType;
+      }
+    }
+
+    return ServerType.UNKNOWN;
+  }
+
+  /**
    * parse the response of the command "/whereami"
    * and create and instance contains all the parsed info.
    * 
    * <p>
-   * if parameter mc is provided and the whereami appoints to
+   * if the parameter mc is provided and the whereami appoints to
    * a game mode, then game mode will also be set.
    * <br>
-   * If the response was empty or <code>null</code>
+   * If the parameter whereami is empty or <code>null</code>
    * an empty instance will be created.
    * 
    * @param whereami
    *          the message to parse
    * @param mc
-   *          (optional) an instance of Minecraft.
+   *          (optional) an instance of Minecraft
+   *          to get the {@link GameMode} if needed.
+   * 
    * @param hypixelUtils
    *          (optional) an instance of the library.
    * 
@@ -146,15 +212,22 @@ public class ServerInstance {
    *         and instance contains all the parsed informations
    * 
    * @throws NotOnHypixelNetwork
-   *           if the message appoints to a game mode and
-   *           the parameter hypixelUtils is not <code>null</code> and
+   *           if the parameter hypixelUtils is not <code>null</code> and
    *           the client is not connected to hypixel network.
    * 
    * @since 1.0
+   * 
+   * @see #ServerInstance()
+   * @see Builder
+   * @see #createDummyServerInstance()
    */
   @Nonnull
   public static ServerInstance createInstance(@Nullable String whereami, @Nullable Minecraft mc,
       @Nullable HypixelUtils hypixelUtils) throws NotOnHypixelNetwork {
+
+    if (hypixelUtils != null && !hypixelUtils.onHypixel()) {
+      throw new NotOnHypixelNetwork();
+    }
 
     ServerInstance newInstance = new ServerInstance();
 
@@ -200,6 +273,49 @@ public class ServerInstance {
     }
 
     return newInstance;
+  }
+
+  /**
+   * Create a dummy instance with random data.
+   * 
+   * <p>
+   * Useful to debug/test features.
+   * 
+   * @return a dummy instance.
+   * 
+   * @since 1.0
+   */
+  @Nonnull
+  public static ServerInstance createDummyServerInstance() {
+    ServerInstance instance = new ServerInstance();
+    Random rn = new Random();
+
+    ServerType[] st = ServerType.values();
+    instance.serverType = st[rn.nextInt(st.length - 1)];
+
+    if (instance.serverType.equals(ServerType.LOBBY)) {
+      LobbyType[] lt = LobbyType.values();
+      instance.lobbyType = lt[rn.nextInt(lt.length - 1)];
+      instance.lobbyNumber = rn.nextInt(60);
+      instance.serverId = instance.lobbyType.getLobbyCodeName() + "lobby" + instance.lobbyNumber;
+
+    } else if (instance.serverType.equals(ServerType.MINIGAME)
+        || instance.serverType.equals(ServerType.MEGAGAME)) {
+      GameMode[] gm = GameMode.values();
+      instance.gameMode = gm[rn.nextInt(gm.length - 1)];
+      // update the server type with the right one for this game mode.
+      instance.serverType = instance.gameMode.getServerType();
+
+      if (instance.serverType.equals(ServerType.MINIGAME)) {
+        instance.serverId = "mini" + rn.nextInt(99) + "a";
+      } else {
+        instance.serverId = "mega" + rn.nextInt(99) + "a";
+      }
+    } else {
+      instance.serverId = "server10a";
+    }
+
+    return instance;
   }
 
   /**
@@ -386,5 +502,77 @@ public class ServerInstance {
       return false;
     }
     return true;
+  }
+
+  /**
+   * a {@link ServerInstance} builder helps build a custom instance.
+   * 
+   * @author aidn5
+   *
+   * @since 1.0
+   * 
+   * @see ServerInstance#ServerInstance()
+   * @see #createInstance(String, Minecraft, HypixelUtils)
+   * @see #createDummyServerInstance()
+   */
+  // it's extended to ServerInstance to support getter methods.
+  public static class Builder extends ServerInstance {
+    @Nonnull
+    public Builder setGameMode(@Nonnull GameMode gameMode) throws NullPointerException {
+      this.gameMode = Objects.requireNonNull(gameMode);
+      return this;
+    }
+
+    @Nonnull
+    public Builder setLobbyNumber(int lobbyNumber) throws IllegalArgumentException {
+      if (lobbyNumber > 0) throw new IllegalArgumentException("lobbyNumber must be 0 or bigger.");
+      this.lobbyNumber = lobbyNumber;
+      return this;
+    }
+
+    @Nonnull
+    public Builder setLobbyType(@Nonnull LobbyType lobbyType) throws NullPointerException {
+      this.lobbyType = Objects.requireNonNull(lobbyType);
+      return this;
+    }
+
+    @Nonnull
+    public Builder setServerId(@Nonnull String serverId) throws NullPointerException {
+      this.serverId = Objects.requireNonNull(serverId);
+      return this;
+    }
+
+    @Nonnull
+    public Builder setServerType(@Nonnull ServerType serverType) throws NullPointerException {
+      this.serverType = Objects.requireNonNull(serverType);
+      return this;
+    }
+
+    @Nonnull
+    public Builder setWhereami(@Nonnull String whereami) throws NullPointerException {
+      this.whereami = Objects.requireNonNull(whereami);
+      return this;
+    }
+
+    /**
+     * Build the custom instance and return it.
+     * 
+     * @return a new built instance.
+     */
+    @Nonnull
+    public ServerInstance build() {
+      ServerInstance si = new ServerInstance();
+
+      si.serverType = serverType;
+      si.serverId = serverId;
+      si.whereami = whereami;
+
+      si.lobbyType = lobbyType;
+      si.lobbyNumber = lobbyNumber;
+
+      si.gameMode = gameMode;
+
+      return si;
+    }
   }
 }

@@ -1,3 +1,4 @@
+
 package com.aidn5.hypixelutils.v1.tools.buffer;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -35,13 +36,13 @@ public class ChatBuffer extends AbNewBuffer<String> {
   }
 
   @Override
-  public AbNewBuffer start() {
+  public AbNewBuffer<String> start() {
     MinecraftForge.EVENT_BUS.register(this);
     return super.start();
   }
 
   @Override
-  public AbNewBuffer stop() {
+  public AbNewBuffer<String> stop() {
     MinecraftForge.EVENT_BUS.unregister(this);
     return super.stop();
   }

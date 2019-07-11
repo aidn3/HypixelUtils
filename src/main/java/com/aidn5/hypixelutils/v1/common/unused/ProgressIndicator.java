@@ -1,3 +1,4 @@
+
 package com.aidn5.hypixelutils.v1.common.unused;
 
 /**
@@ -11,7 +12,7 @@ package com.aidn5.hypixelutils.v1.common.unused;
  */
 @Deprecated
 public class ProgressIndicator<T> {
-  private onProgressUpdate listener;
+  private onProgressUpdate<T> listener;
   private int progress = 0;
   private int totalProgress = -1;
 

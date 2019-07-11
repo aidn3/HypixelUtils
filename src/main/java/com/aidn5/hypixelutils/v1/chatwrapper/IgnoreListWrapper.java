@@ -1,5 +1,5 @@
 
-package com.aidn5.hypixelutils.v1.chatreader;
+package com.aidn5.hypixelutils.v1.chatwrapper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,7 +36,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @version 1.0
  * @since 1.0
  * 
- * @category ChatReader
+ * @category chatwrapper
  */
 // some methods has been divided to smaller methods
 // to reduce the length number of lines in one method
@@ -336,9 +336,11 @@ public class IgnoreListWrapper implements Iterable<String>, Iterator<String> {
       // see #isIgnoreListStarted(...)
       if (patternStarted) {
         if (isNewUsername(event, message)) {
-          ;
+          // everything is done inside their own methods.
+
         } else if (isEnded(event, message)) {
-          ;
+          // everything is done inside their own methods.
+
         }
       }
     }

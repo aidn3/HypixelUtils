@@ -81,7 +81,7 @@ public abstract class ABuffer<T> implements Runnable {
    *          Value to add to the buffer
    * @return this
    */
-  public ABuffer push(T pushedValue) {
+  public ABuffer<T> push(T pushedValue) {
     buffer.add(pushedValue);
     return this;
   }
@@ -91,7 +91,7 @@ public abstract class ABuffer<T> implements Runnable {
    * 
    * @return this
    */
-  public ABuffer clear() {
+  public ABuffer<T> clear() {
     buffer.clear();
     return this;
   }
@@ -119,7 +119,7 @@ public abstract class ABuffer<T> implements Runnable {
    * 
    * @return this
    */
-  public ABuffer start() {
+  public ABuffer<T> start() {
     this.started = true;
     threadPool.submit(() -> {
       while (!Thread.currentThread().isInterrupted() && started) {
@@ -142,7 +142,7 @@ public abstract class ABuffer<T> implements Runnable {
    * 
    * @return this
    */
-  public ABuffer stop() {
+  public ABuffer<T> stop() {
     started = false;
 
     return this;

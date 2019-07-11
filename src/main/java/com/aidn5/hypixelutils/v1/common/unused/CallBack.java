@@ -1,3 +1,4 @@
+
 package com.aidn5.hypixelutils.v1.common.unused;
 
 /**
@@ -10,5 +11,5 @@ package com.aidn5.hypixelutils.v1.common.unused;
 @Deprecated
 @FunctionalInterface
 public interface CallBack<T> {
-  public void onCallBack(T param);
+  public void call(T param);
 }

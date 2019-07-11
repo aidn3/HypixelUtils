@@ -18,8 +18,6 @@ import javax.annotation.Nonnull;
  * 
  * @version 1.0
  * @since 1.0
- * 
- * @category Common
  */
 public class ListenerBus<T extends EventListener> {
   @Nonnull
@@ -58,7 +56,8 @@ public class ListenerBus<T extends EventListener> {
   /**
    * Get the pointer to the private set where all the listeners are saved.
    * 
-   * <p>Used to callback the listeners when the specific event occurs
+   * <p>
+   * Used to callback the listeners when the specific event occurs
    * 
    * @return all the registered listeners
    */

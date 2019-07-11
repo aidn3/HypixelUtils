@@ -23,10 +23,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiPlayerTabOverlay;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.util.IChatComponent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
@@ -42,8 +40,7 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * @version 1.0
  * @since 1.0
  * 
- * @category EventListener
- * @category Utils
+ * @category ListenerBus
  */
 public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
   @Nonnull
@@ -85,7 +82,7 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
 
     // check the server's ip
     if (checkIp(ip)) {
-      runCallback(true, ip, VerificationMethod.IP, true);
+      runCallback(true, ip, VerificationMethod.IP);
       return;
     }
 
@@ -96,16 +93,16 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
       // Check the server's metadata
       final VerificationMethod metadataVerification = checkServerMetadataForHypixel();
       if (metadataVerification != null) {
-        runCallback(true, ip, metadataVerification, true);
+        runCallback(true, ip, metadataVerification);
       } else {
-        runCallback(false, ip, null, true);
+        runCallback(false, ip, null);
       }
     }, 20);
   }
 
   @SubscribeEvent
   public void onLoggedOut(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
-    runCallback(false, null, null, true);
+    runCallback(false, null, null);
   }
 
   /**
@@ -119,37 +116,17 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    *          IP the user is connected to
    * @param method
    *          the used method to determine that it's online hypixel
-   * 
-   * @param sendForgeEvent
-   *          whether to send the event to the bus forge.
    */
-  private synchronized void runCallback(boolean onHypixel, @Nullable String ip,
-      @Nullable VerificationMethod method, boolean sendForgeEvent) {
+  private void runCallback(boolean onHypixel, @Nullable String ip,
+      @Nullable VerificationMethod method) {
     if (onHypixel != isOnlineHypixelNetwork) {
       isOnlineHypixelNetwork = onHypixel;
 
-      // submit the event to forge
-      if (sendForgeEvent) {
-        hypixelUtils.threadPool.submit(() -> {
-          MinecraftForge.EVENT_BUS.post(new OnHypixelEvent(onHypixel, ip, method));
-        });
-      }
-
       for (OnHypixelCallback listener : getListeners()) {
         hypixelUtils.threadPool.submit(() -> {
-          listener.run(onHypixel, ip, method);
+          listener.onOnHypixelUpdate(onHypixel, ip, method);
         });
       }
-    }
-  }
-
-  @SubscribeEvent
-  public void onHypixelEvent(OnHypixelEvent event) {
-    if (event != null) {
-      // if this library is used and implemented by more than one mod,
-      // then every mod will send the same event, which will result in a disaster
-      // for those who hot-wire their code directly to the event.
-      runCallback(event.isOnHypixel(), event.getIp(), event.getMethod(), false);
     }
   }
 
@@ -355,71 +332,8 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
      * 
      * @since 1.0
      */
-    void run(boolean onHypixel, @Nullable String ip, @Nullable VerificationMethod method);
-  }
-
-  /**
-   * Event fired to the {@link MinecraftForge#EVENT_BUS},
-   * when the status is changed.
-   * 
-   * @author aidn5
-   *
-   * @since 1.0
-   * @version 1.0
-   * 
-   * @category Event
-   */
-  public static class OnHypixelEvent extends Event {
-    private final boolean onHypixel;
-    @Nullable
-    private final String ip;
-    @Nullable
-    private final VerificationMethod method;
-
-
-    private OnHypixelEvent(boolean onHypixel, @Nullable String ip,
-        @Nullable VerificationMethod method) {
-      this.onHypixel = onHypixel;
-      this.ip = ip;
-      this.method = method;
-    }
-
-    /**
-     * Whether the client is on Hypixel or not.
-     * 
-     * @return <code>true</code> if it is.
-     * 
-     * @since 1.0
-     */
-    public boolean isOnHypixel() {
-      return onHypixel;
-    }
-
-    /**
-     * The IP the client is on. If <code>null</code>,
-     * it means the client is not connected to any server
-     * 
-     * @return the ip the client is on. or <code>null</code>
-     * 
-     * @since 1.0
-     */
-    public String getIp() {
-      return ip;
-    }
-
-    /**
-     * The method used to verify that the client is on Hypixel, or null
-     * if not on hypixel
-     * 
-     * @return The method used to verify that the client is on Hypixel, or null
-     *         if not on hypixel
-     * 
-     * @since 1.0
-     */
-    @Nullable
-    public VerificationMethod getMethod() {
-      return method;
-    }
+    void onOnHypixelUpdate(boolean onHypixel, @Nullable String ip,
+        @Nullable VerificationMethod method);
   }
 
   /**

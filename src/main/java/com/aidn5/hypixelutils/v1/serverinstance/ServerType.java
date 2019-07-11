@@ -1,13 +1,12 @@
 
-package com.aidn5.hypixelutils.v1.server;
+package com.aidn5.hypixelutils.v1.serverinstance;
 
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatreader.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 
 /**
@@ -23,11 +22,9 @@ import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
  * @version 1.0
  * @since 1.0
  * 
- * @category ChatReader
- * 
- * @see WhereAmIWrapper
- * @see ServerInstanceListener
+ * @category ServerInstance
  */
+// all regex patterns must have one group
 public enum ServerType {
   /**
    * The player is here probably because they are either AFK (idling)
@@ -37,7 +34,7 @@ public enum ServerType {
   /**
    * They are in a lobby waiting/chatting/doing whatever they would like to do.
    * perfect time to send commands like /stats, /profile
-   * and other commands which requires the player to be in a lobby and not in a
+   * and other commands, which requires the player to be in a lobby and not in a
    * game.
    * 
    * @see LobbyType
@@ -88,43 +85,12 @@ public enum ServerType {
   }
 
   /**
-   * get the server type from the whereami message.
-   * 
-   * @param whereami
-   *          the response from the /whereami command.
-   * 
-   * @return the server the whereami appointed to.
-   *         or {@link #UNKNOWN} if not found.
-   * 
-   * @since 1.0
-   * 
-   * @see #getServerTypePattern()
-   * @see WhereAmIWrapper
-   * @see ServerInstanceListener
-   */
-  @Nonnull
-  public static ServerType getServerTypeFromWhereAmI(@Nullable String whereami) {
-    if (whereami == null || whereami.isEmpty()) {
-      return UNKNOWN;
-    }
-
-    for (ServerType serverType : values()) {
-      if (serverType.getWhereAmIPattern().matcher(whereami).find()) {
-        return serverType;
-      }
-    }
-
-    return ServerType.UNKNOWN;
-  }
-
-  /**
    * regex to determine, whether the message is a /whereami response.
    * 
    * @return the regex to use to find /whereami response.
    * 
    * @since 1.0
    * 
-   * @see #getServerTypeFromWhereAmI(String)
    * @see WhereAmIWrapper
    * @see ServerInstanceListener
    */
