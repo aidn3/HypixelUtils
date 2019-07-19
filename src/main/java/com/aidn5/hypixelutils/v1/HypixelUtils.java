@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.aidn5.hypixelutils.v1.chatwrapper.IgnoreListWrapper;
 import com.aidn5.hypixelutils.v1.chatwrapper.MapWrapper;
 import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
 import com.aidn5.hypixelutils.v1.common.ChatWrapper;
@@ -76,7 +75,6 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * callback when the message is found)<br>
  * <i>Note: Every Wrapper has its own inline callback interface.</i>
  * <ul>
- * <li>{@link IgnoreListWrapper}</li>
  * <li>{@link MapWrapper}</li>
  * <li>{@link WhereAmIWrapper}</li>
  * </ul>
@@ -129,9 +127,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * @version 1.0
  * @since 1.0
  */
-// TODO: add guild coins members.
 // TODO: create logger and use it to log
-// TODO: rewrite IgnoreListWrapper to meet the specifications of @IChatWrapper
 // TODO: add license for aidn5 and robere2
 // TODO: add the licenses to the build along with README.md
 @IHypixelUtils
@@ -431,22 +427,6 @@ public final class HypixelUtils {
   @Nonnull
   public ServerInstance getLastServerInstance() {
     return serverInstanceListener.getLastServerInstance();
-  }
-
-  /**
-   * get a new instance of {@link IgnoreListWrapper} ready to use.
-   * 
-   * @return a new instance of {@link IgnoreListWrapper}
-   * 
-   * @since 1.0
-   * 
-   * @category ChatReader
-   * 
-   * @see IgnoreListWrapper#newInstance(HypixelUtils)
-   */
-  @Nonnull
-  public IgnoreListWrapper getIgnoreListWrapper() {
-    return IgnoreListWrapper.newInstance(this);
   }
 
   /**
