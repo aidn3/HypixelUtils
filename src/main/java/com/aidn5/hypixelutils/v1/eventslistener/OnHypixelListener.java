@@ -16,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
@@ -37,6 +38,7 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * It also provides {@link ListenerBus} to register listeners and callback
  * when the status {@link #onHypixel()} changes
  * 
+ * @author robere2
  * @author aidn5
  * 
  * @version 1.0
@@ -44,6 +46,7 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * 
  * @category ListenerBus
  */
+@IHypixelUtils(OnlyHypixel = true)
 public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
   @Nonnull
   private final HypixelUtils hypixelUtils;
@@ -325,6 +328,7 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    * @category EventListener
    */
   @FunctionalInterface
+  @IHypixelUtils(OnlyHypixel = true)
   public interface OnHypixelCallback extends EventListener {
 
     /**
@@ -347,7 +351,10 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
 
   /**
    * Enum for possible ways that the client was verified to be on Hypixel.
+   * 
+   * @author robere2
    */
+  @IHypixelUtils(OnlyHypixel = true)
   public enum VerificationMethod {
     /**
      * the server has been confirmed to by hypixel network by its IP.
@@ -385,6 +392,7 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    * 
    * @category Event
    */
+  @IHypixelUtils(isForgeEvent = true, OnlyHypixel = true)
   public static class OnHypixelEvent extends Event {
     private final boolean onHypixel;
     @Nullable

@@ -8,6 +8,8 @@ import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
 import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper.WhereAmICallback;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.VerificationMethod;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener.ServerInstanceCallback;
@@ -22,21 +24,22 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
- * Class checks to what server is the client is connected to
- * every time the world changes.
+ * Class checks to what server is the client is connected to every time the
+ * world changes.
  * 
  * <p>
- * It also provides {@link ListenerBus} to register listeners and callback
- * when the status {@link #getLastServerInstance()} changes.
+ * It also provides {@link ListenerBus} to register listeners and callback when
+ * the status
+ * {@link #getLastServerInstance()} changes.
  * 
  * @author aidn5
  * 
- * @version 1.0
- * @since 1.0
+ * @version 1.0 @since 1.0
  * 
- * @category ListenerBus
- * @category
+ * @category ListenerBus @category
  */
+@IHypixelUtils(OnlyHypixel = true)
+@IEventListener
 public final class ServerInstanceListener extends ListenerBus<ServerInstanceCallback> {
   @Nonnull
   private final HypixelUtils hypixelUtils;
@@ -61,7 +64,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
   private ServerInstanceListener(@Nonnull HypixelUtils hypixelUtils) {
     this.hypixelUtils = hypixelUtils;
 
-    hypixelUtils.getOnHypixelListener().register(new OnHypixelCallback() {
+    hypixelUtils.onHypixelListener.register(new OnHypixelCallback() {
       @Override
       public void onOnHypixelUpdate(boolean onHypixel, String ip, VerificationMethod method) {
         if (onHypixel) {
@@ -75,11 +78,12 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
   }
 
   /**
-   * get the saved server instance
-   * since the last time is requested (every time when the world changes).
+   * get the saved server instance since the last time is requested (every time
+   * when the world
+   * changes).
    * 
-   * @return the serverInstance (mostly up-to-date).
-   *         <u>Never <code>null</code></u>
+   * @return the serverInstance (mostly up-to-date). <u>Never
+   *         <code>null</code></u>
    * 
    * @since 1.0
    */
@@ -141,11 +145,11 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * 
    * @category EventListener
    */
+  @IHypixelUtils(OnlyHypixel = true)
   @FunctionalInterface
   public interface ServerInstanceCallback extends EventListener {
     /**
-     * callback on a separate thread
-     * when listener is triggered.
+     * callback on a separate thread when listener is triggered.
      * 
      * @param si
      *          an instance which contains all the parsed information.
@@ -165,6 +169,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * 
    * @category Event
    */
+  @IHypixelUtils(OnlyHypixel = true, isForgeEvent = true)
   public static class ServerInstanceEvent extends Event {
     private final ServerInstance serverInstance;
 

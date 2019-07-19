@@ -8,6 +8,9 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.compress.utils.IOUtils;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * helps working with resources.
  * 
@@ -19,6 +22,8 @@ import org.apache.commons.compress.utils.IOUtils;
  * @category Utils
  *
  */
+@IHypixelUtils
+@IHelpTools(onlyStatic = true)
 public class AssetHelper {
   private AssetHelper() {
     throw new AssertionError();

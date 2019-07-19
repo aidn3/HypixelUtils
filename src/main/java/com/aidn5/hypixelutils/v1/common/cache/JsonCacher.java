@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -28,9 +30,14 @@ import com.google.gson.reflect.TypeToken;
  *          the object to convert to JSON and save.
  * 
  * @category ICacher
+ * 
  * @since 1.0
  * @version 1.0
+ * 
+ * @see ICacher
  */
+@IHelpTools
+@IHypixelUtils
 public class JsonCacher<T> implements ICacher<String, T> {
   private HashMap<String, CachedSet<String, T>> cachedSets = new HashMap<>(100);
 
@@ -41,7 +48,8 @@ public class JsonCacher<T> implements ICacher<String, T> {
   /**
    * create new instance of {@link JsonCacher}.
    * 
-   * <p>if <code>cacheFilePath</code> is null, 
+   * <p>
+   * if <code>cacheFilePath</code> is null,
    * {@link #saveCache()} and {@link #loadCache()} will be disabled.
    * 
    * @param cacheFilePath
@@ -136,24 +144,28 @@ public class JsonCacher<T> implements ICacher<String, T> {
   @Override
   public void loadCache() {
     if (this.cacheFilePath == null || !this.cacheFilePath.exists()) {
-      this.cachedSets = new HashMap<>(100);
+      synchronized (this) {
+        this.cachedSets = new HashMap<>(100);
+      }
       return;
     }
 
     try {
-      FileInputStream fis = new FileInputStream(this.cacheFilePath);
+      synchronized (cacheFilePath) {
+        FileInputStream fis = new FileInputStream(this.cacheFilePath);
 
-      byte[] data = new byte[(int) this.cacheFilePath.length()];
-      fis.read(data);
-      fis.close();
+        byte[] data = new byte[(int) this.cacheFilePath.length()];
+        fis.read(data);
+        fis.close();
 
-      String string = new String(data, "UTF-8");
 
-      Type listType = new TypeToken<ArrayList<CachedSet<String, T>>>() {}.getType();
-      Gson gson = new Gson();
+        String string = new String(data, "UTF-8");
 
-      this.cachedSets = gson.fromJson(string, listType);
+        Type listType = new TypeToken<ArrayList<CachedSet<String, T>>>() {}.getType();
+        Gson gson = new Gson();
 
+        this.cachedSets = gson.fromJson(string, listType);
+      }
     } catch (IOException e) {
       e.printStackTrace();
 
@@ -168,14 +180,15 @@ public class JsonCacher<T> implements ICacher<String, T> {
     }
 
     try {
-      Gson gson = new Gson();
-      Type listType = new TypeToken<ArrayList<CachedSet<String, T>>>() {}.getType();
-      String json = gson.toJson(this.cachedSets, listType);
+      synchronized (cacheFilePath) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<ArrayList<CachedSet<String, T>>>() {}.getType();
+        String json = gson.toJson(this.cachedSets, listType);
 
-      OutputStream out = new FileOutputStream(this.cacheFilePath);
-      out.write(json.getBytes());
-      out.close();
-
+        OutputStream out = new FileOutputStream(this.cacheFilePath);
+        out.write(json.getBytes());
+        out.close();
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }

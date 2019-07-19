@@ -6,6 +6,9 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * Object holds the cached data and its metadata.
  * 
@@ -18,7 +21,11 @@ import javax.annotation.Nullable;
  * 
  * @since 1.0
  * @category ICacher
+ * 
+ * @see ICacher
  */
+@IHypixelUtils
+@IHelpTools
 public class CachedSet<K, V> {
   private final K key;
   private final V value;

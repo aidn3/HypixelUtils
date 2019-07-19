@@ -3,7 +3,7 @@
  * and return it as a callback.
  * 
  * @author aidn5
- * @author Buggfroggy
+ * @author robere2
  * 
  * @since 1.0
  */

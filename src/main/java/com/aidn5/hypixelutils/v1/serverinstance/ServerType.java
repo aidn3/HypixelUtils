@@ -7,6 +7,7 @@ import javax.annotation.Nonnull;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 
 /**
@@ -24,6 +25,7 @@ import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
  * 
  * @category ServerInstance
  */
+@IHypixelUtils(OnlyHypixel = true)
 // all regex patterns must have one group
 public enum ServerType {
   /**
@@ -39,12 +41,12 @@ public enum ServerType {
    * 
    * @see LobbyType
    */
-  LOBBY("^You are currently connected to server ([a-z]{0,64}lobby[a-zA-Z0-9]{1,3})"),
+  LOBBY("^You are currently connected to server ([a-z]{0,64}lobby[a-zA-Z0-9]{1,5})"),
   /**
    * The player is playing a mini-game like skywars/duel/bedwars/etc.
    * Best time to activate mods like hitIndicator, pingMod, etc.
    */
-  MINIGAME("^You are currently connected to server (mini[a-zA-Z0-9]{1,4})"),
+  MINIGAME("^You are currently connected to server (mini[a-zA-Z0-9]{1,5})"),
   /**
    * The player is playing a game which will probably takes an hour to finish
    * like UHC-Champion.
@@ -53,7 +55,7 @@ public enum ServerType {
    * It's better not to mess with the player like doing /hub or doing something
    * that may crash the client.
    */
-  MEGAGAME("^You are currently connected to server (mega[a-zA-Z0-9]{1,4})"),
+  MEGAGAME("^You are currently connected to server (mega[a-zA-Z0-9]{1,5})"),
   /**
    * The player is on hypixel network, but the {@link HypixelUtils} can not
    * determine where is the player exactly at.

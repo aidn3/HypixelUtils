@@ -9,6 +9,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 
 import net.minecraft.client.Minecraft;
@@ -23,6 +25,8 @@ import net.minecraft.util.EnumChatFormatting;
  * 
  * @category Utils
  */
+@IHypixelUtils
+@IHelpTools(onlyStatic = true)
 public class Scoreboard {
   /**
    * Get the title of the current server from the scoreboard.
@@ -47,6 +51,8 @@ public class Scoreboard {
    * @since 1.0
    * @see #getSidebarScores(Minecraft)
    */
+  @IHypixelUtils(
+      OnlyHypixel = true)
   @Nonnull
   public static String gameServerTitle(@Nonnull Minecraft mc, @Nullable HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {
@@ -82,7 +88,6 @@ public class Scoreboard {
     for (String s : obCollection) {
       String text = EnumChatFormatting.getTextWithoutFormattingCodes(s);
       scoreBoard.add(text);
-      System.out.println("Scoreboard: " + text);
     }
 
     return scoreBoard;

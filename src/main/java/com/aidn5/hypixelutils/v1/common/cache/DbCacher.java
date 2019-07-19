@@ -12,6 +12,9 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * Cacher uses Database to cache data.
  * 
@@ -21,9 +24,14 @@ import javax.annotation.Nullable;
  * @author aidn5
  *
  * @category ICacher
+ * 
  * @since 1.0
  * @version 1.0
+ * 
+ * @see ICacher
  */
+@IHypixelUtils
+@IHelpTools
 public class DbCacher implements ICacher<String, String> {
 
   private static final String QUERY_CREATE_TABLE;
@@ -144,8 +152,7 @@ public class DbCacher implements ICacher<String, String> {
   @Override
   public void saveCache() {
     // this is DB.
-    // all data is already ready to be retrieved from the disk
-    // without any further loading and parsing
+    // all data is already saved to the disk
   }
 
   @Override

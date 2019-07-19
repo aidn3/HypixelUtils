@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IChatWrapper;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
@@ -21,13 +23,15 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * map the client is playing on.
  * 
  * @author aidn5
- * @author Buggfroggy
+ * @author robere2
  * 
  * @since 1.0
  * @version 1.0
  * 
- * @category ChatReader
+ * @category ChatWrapper
  */
+@IHypixelUtils(OnlyHypixel = true)
+@IChatWrapper(usesLock = false)
 public class MapWrapper {
 
   /**
@@ -159,6 +163,7 @@ public class MapWrapper {
    * @since 1.0
    */
   @FunctionalInterface
+  @IHypixelUtils(OnlyHypixel = true)
   public interface MapCallback {
     /**
      * callback on a separate thread when the message is found in the chat.

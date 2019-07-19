@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IChatWrapper;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.serverinstance.ServerType;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
@@ -25,8 +27,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @version 1.0
  * @since 1.0
  * 
- * @category ChatReader
+ * @category ChatWrapper
  */
+@IHypixelUtils(OnlyHypixel = true)
+@IChatWrapper(usesLock = false)
 public class WhereAmIWrapper {
   /**
    * how many times is /whereami sent.
@@ -103,7 +107,6 @@ public class WhereAmIWrapper {
     for (ServerType serverType : ServerType.values()) {
       Matcher matcher = serverType.getWhereAmIPattern().matcher(message);
       if (matcher.find()) {
-        System.out.println("whereAmI found! " + timesCommandSent);
         if (!event.isCanceled()) {
           if (timesCommandSent > 0) {
             timesCommandSent--;
@@ -135,6 +138,7 @@ public class WhereAmIWrapper {
    * @version 1.0
    * @since 1.0
    */
+  @IHypixelUtils(OnlyHypixel = true)
   @FunctionalInterface
   public interface WhereAmICallback {
     /**

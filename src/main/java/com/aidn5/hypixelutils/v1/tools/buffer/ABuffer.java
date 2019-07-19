@@ -8,18 +8,21 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * Abstract buffer element used for... anything buffer-related.
  * 
  * TODO: add proper copyright
  * 
- * @author Buggfroggy
+ * @author robere2
  * 
  * @since 1.0
  * @version 1.0
- * 
- * @category BackendUtils
  */
+@IHypixelUtils
+@IBackend
 public abstract class ABuffer<T> implements Runnable {
   /**
    * Buffer of all the objects.
@@ -68,8 +71,9 @@ public abstract class ABuffer<T> implements Runnable {
    */
   public T pull() {
     T returnValue = peek();
-    if (returnValue != null)
+    if (returnValue != null) {
       buffer.remove(0);
+    }
 
     return returnValue;
   }

@@ -1,5 +1,4 @@
 
-// For those who want the bleeding edge
 buildscript {
     repositories {
         jcenter()
@@ -44,6 +43,7 @@ minecraft {
 }
 
 dependencies {
+    /// no further dependencies required
 }
 
 processResources{

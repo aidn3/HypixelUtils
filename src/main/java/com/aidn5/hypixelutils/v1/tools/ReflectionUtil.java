@@ -8,6 +8,9 @@ import java.lang.reflect.Method;
 
 import javax.annotation.Nonnull;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
@@ -16,13 +19,16 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
  * java's internal reflection implementations.
  * 
  * @author cpw
- * @author Buggfroggy
+ * @author robere2
+ * @author aidn5
  * 
  * @since 1.0
  * @version 1.0
  * 
  * @category Utils
  */
+@IHypixelUtils
+@IHelpTools(onlyStatic = true)
 public class ReflectionUtil extends ReflectionHelper {
 
   private ReflectionUtil() {
@@ -42,7 +48,6 @@ public class ReflectionUtil extends ReflectionHelper {
    * @throws NoSuchFieldException
    *           The field doesn't exist
    * 
-   * @author Buggfroggy
    * @since 1.0
    */
   @Nonnull
@@ -66,7 +71,6 @@ public class ReflectionUtil extends ReflectionHelper {
    * @throws NoSuchMethodException
    *           The method doesn't exist
    * 
-   * @author Buggfroggy
    * @since 1.0
    */
   @Nonnull
@@ -89,7 +93,6 @@ public class ReflectionUtil extends ReflectionHelper {
    * @throws ReflectiveOperationException
    *           if any reflection error occurs
    * 
-   * @author aidn5
    * @since 1.0
    */
   @Nonnull
@@ -110,7 +113,6 @@ public class ReflectionUtil extends ReflectionHelper {
    * @throws IllegalAccessException
    *           Couldn't access the minecraft version for some reason
    * 
-   * @author Buggfroggy
    * @since 1.0
    */
   @Nonnull
@@ -130,7 +132,6 @@ public class ReflectionUtil extends ReflectionHelper {
    * @throws NoSuchMethodException
    *           Forge version method doesn't exist for some reason
    * 
-   * @author Buggfroggy
    * @since 1.0
    */
   @Nonnull

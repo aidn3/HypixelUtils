@@ -5,6 +5,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * abstract buffer array used to buffer the pushed elements on its own
  * {@link Thread} with {@link #sleepTime} in between.
@@ -17,6 +20,8 @@ import java.util.concurrent.Executors;
  * @since 1.0
  * @category BackendUtils
  */
+@IBackend
+@IHypixelUtils
 public abstract class AbNewBuffer<T> extends ArrayBlockingQueue<T> {
   /**
    * The time in milliseconds between {@link #run()}/{@link #next(Object)} calls.
@@ -60,7 +65,7 @@ public abstract class AbNewBuffer<T> extends ArrayBlockingQueue<T> {
   }
 
   /**
-   * Start the buffer to start buffering the elements to {@link #next(T)}.
+   * Start the buffer to start buffering the elements to {@link #next(Object)}.
    * 
    * @return this
    */

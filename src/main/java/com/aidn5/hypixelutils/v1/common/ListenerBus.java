@@ -7,6 +7,9 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * An event bus manages the events callback system by providing a way to
  * register/unregister new callbacks to an event.
@@ -19,6 +22,8 @@ import javax.annotation.Nonnull;
  * @version 1.0
  * @since 1.0
  */
+@IBackend
+@IHypixelUtils
 public class ListenerBus<T extends EventListener> {
   @Nonnull
   private final Set<T> listeners = new HashSet<T>();

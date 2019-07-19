@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
@@ -27,7 +28,7 @@ import net.minecraft.client.Minecraft;
  * 
  * <p>
  * Use {@link ServerInstanceListener#getLastServerInstance()}
- * from {@link HypixelUtils#getServerInstanceListener()}
+ * from {@link HypixelUtils#serverInstanceListener}
  * to get an instance of this class.<br>
  * You can also create an empty instance by
  * {@link #ServerInstance()}, new instance with parsed information
@@ -40,7 +41,8 @@ import net.minecraft.client.Minecraft;
  * @since 1.0
  * @version 1.0
  */
-// all methods of this class must never return NULL.
+@IHypixelUtils(OnlyHypixel = true)
+// all methods of this class must never return null.
 public class ServerInstance {
   @Nonnull
   protected LobbyType lobbyType = LobbyType.UNKNOWN;
@@ -525,7 +527,9 @@ public class ServerInstance {
 
     @Nonnull
     public Builder setLobbyNumber(int lobbyNumber) throws IllegalArgumentException {
-      if (lobbyNumber > 0) throw new IllegalArgumentException("lobbyNumber must be 0 or bigger.");
+      if (lobbyNumber > 0) {
+        throw new IllegalArgumentException("lobbyNumber must be 0 or bigger.");
+      }
       this.lobbyNumber = lobbyNumber;
       return this;
     }

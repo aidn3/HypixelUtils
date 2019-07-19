@@ -1,16 +1,20 @@
 [
-{
-  "modid": "hypixelutils",
-  "name": "Hypixel Utils",
-  "description": "Best Library.",
-  "version": "${version}",
-  "mcversion": "${mcversion}",
-  "url": "",
-  "updateUrl": "",
-  "authorList": ["aidn5"],
-  "credits": "JUST ME",
-  "logoFile": "",
-  "screenshots": [],
-  "dependencies": []
-}
+    {
+        "modid": "hypixelutils",
+        "name": "Hypixel Utils",
+        "description": "Library contains most of used the classes/wrappers/APIs in mods for hypixel network.",
+        "version": "${version}",
+        "mcversion": "${mcversion}",
+        "url": "",
+        "updateUrl": "",
+        "authorList": [
+            "aidn5"
+        ],
+        "credits": "robere2",
+        "logoFile": "",
+        "screenshots": [
+        ],
+        "dependencies": [
+        ]
+    }
 ]

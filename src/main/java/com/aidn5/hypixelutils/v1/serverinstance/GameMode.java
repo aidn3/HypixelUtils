@@ -4,6 +4,7 @@ package com.aidn5.hypixelutils.v1.serverinstance;
 import javax.annotation.Nonnull;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
 
 import net.minecraft.client.Minecraft;
@@ -32,6 +33,7 @@ import net.minecraft.client.Minecraft;
  * 
  * @category ServerInstance
  */
+@IHypixelUtils(OnlyHypixel = true)
 // TODO: GameMode: add the rest of the games
 // TODO: GameMode: test games
 public enum GameMode {

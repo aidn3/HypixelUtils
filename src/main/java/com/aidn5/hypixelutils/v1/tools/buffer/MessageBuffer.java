@@ -1,7 +1,11 @@
+
 package com.aidn5.hypixelutils.v1.tools.buffer;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
+
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -13,10 +17,12 @@ import net.minecraft.util.IChatComponent;
  * buffer to the player as soon as possible.
  * 
  * @category BackendUtils
- * @author Buggfroggy
+ * @author robere2
  * @since 1.0
  * @version 1.0
  */
+@IHypixelUtils
+@IBackend
 public class MessageBuffer extends AbNewBuffer<IChatComponent> {
 
   /**

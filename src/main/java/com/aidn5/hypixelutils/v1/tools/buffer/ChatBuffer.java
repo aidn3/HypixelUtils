@@ -4,6 +4,9 @@ package com.aidn5.hypixelutils.v1.tools.buffer;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -17,10 +20,12 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * as possible. Buffer is cleared when the player
  * disconnects from a server.
  */
+@IHypixelUtils
+@IBackend
 public class ChatBuffer extends AbNewBuffer<String> {
 
   /**
-   * Constructor
+   * Constructor.
    *
    * @param capacity
    *          how many elements maximum can the buffer hold. See
@@ -53,7 +58,7 @@ public class ChatBuffer extends AbNewBuffer<String> {
   }
 
   /**
-   * Start sending messages in the buffer
+   * Start sending messages in the buffer.
    */
   @Override
   protected void next(String message) {
@@ -62,7 +67,8 @@ public class ChatBuffer extends AbNewBuffer<String> {
 
     // Handle as a command
     if (message.startsWith("/")
-        && ClientCommandHandler.instance.executeCommand(player, message) == 0)
+        && ClientCommandHandler.instance.executeCommand(player, message) == 0) {
       player.sendChatMessage(message);
+    }
   }
 }

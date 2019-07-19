@@ -20,6 +20,9 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -38,6 +41,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
  * @see "https://github.com/robere2/QuickPlay/blob/master/src/main/java/co/bugg/quickplay/util/TickDelay.java"
  * @license https://github.com/robere2/QuickPlay/blob/master/LICENSE
  */
+@IHelpTools
+@IHypixelUtils
 public class TickDelay {
 
   /**

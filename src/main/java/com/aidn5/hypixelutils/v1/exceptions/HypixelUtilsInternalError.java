@@ -1,6 +1,9 @@
 
 package com.aidn5.hypixelutils.v1.exceptions;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+
 /**
  * Indicates that the library has encountered an internal error.
  * 
@@ -12,6 +15,8 @@ package com.aidn5.hypixelutils.v1.exceptions;
  * 
  * @category Exception
  */
+@IHypixelUtils
+@IBackend
 public class HypixelUtilsInternalError extends RuntimeException {
   public HypixelUtilsInternalError() {
     super();

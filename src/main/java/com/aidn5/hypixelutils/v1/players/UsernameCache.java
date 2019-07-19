@@ -11,10 +11,13 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
+import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
 import com.aidn5.hypixelutils.v1.common.cache.CachedSet;
 import com.aidn5.hypixelutils.v1.common.cache.ICacher;
 import com.aidn5.hypixelutils.v1.common.cache.JsonCacher;
@@ -23,14 +26,41 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-public class Usernames {
+/**
+ * Class helps with converting the usernames and UUIDs back and forth.
+ * It uses Mojang servers to retrieve the data.
+ * It also cache the usernames and UUIDs for later use.
+ * 
+ * <p>
+ * Public static methods {@link #getUsernameFromNet(UUID)} and
+ * {@link #getUuidFromNet(String)} contact the mojang server and retrieve the
+ * data without caching them.
+ * {@link #getUsername(UUID)} and {@link #getUuid(String)} use the public static
+ * methods AND cache their result for later use.
+ * 
+ * @author aidn5
+ * 
+ * @version 1.0
+ * @since 1.0
+ * 
+ * @see ICacher
+ * @see JsonCacher
+ */
+@IHypixelUtils
+@IHelpTools
+public class UsernameCache {
+  // https://stackoverflow.com/a/19399768
+  @Nonnull
+  private static Pattern uuidWithDashesP = Pattern
+      .compile("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)");
+
   @Nonnull
   private final ICacher<String, String> cacher;
 
   /**
    * Create a new instance with default memory-cacher.
    */
-  public Usernames() {
+  public UsernameCache() {
     this(null);
   }
 
@@ -41,14 +71,16 @@ public class Usernames {
    *          the file where cache should be saved.
    *          can be <code>null</code>
    */
-  public Usernames(@Nullable File cacheFilePath) {
+  public UsernameCache(@Nullable File cacheFilePath) {
     cacher = new JsonCacher<>(cacheFilePath, 7, TimeUnit.DAYS);
+    cacher.loadCache();
   }
 
   /**
    * get the username of the player by looking up by their ID.
    * 
-   * <p>Check cache first then invoke {@link #getUsernameFromNet(UUID)}
+   * <p>
+   * Check cache first then invoke {@link #getUsernameFromNet(UUID)}
    * and save its value into cache for later use.
    * 
    * @param uuid
@@ -82,7 +114,8 @@ public class Usernames {
   /**
    * get the ascoicated id with the player.
    * 
-   * <p>Check cache first then invoke {@link #getUuidFromNet(String)}
+   * <p>
+   * Check cache first then invoke {@link #getUuidFromNet(String)}
    * and save its value into cache for later use.
    * 
    * @param username
@@ -100,7 +133,7 @@ public class Usernames {
     Iterator<CachedSet<String, String>> iterator = cacher.getCacheByValue(username).iterator();
 
     if (iterator.hasNext()) {
-      return UUID.fromString(iterator.next().getKey());
+      return stringToUuid(iterator.next().getKey());
     }
 
 
@@ -129,7 +162,7 @@ public class Usernames {
       JsonElement jsonObject = new JsonParser().parse(json);
       String uuid = jsonObject.getAsJsonObject().get("id").getAsString();
 
-      return UUID.fromString(uuid);
+      return stringToUuid(uuid);
     } catch (Exception e) {
 
       e.printStackTrace();
@@ -183,19 +216,20 @@ public class Usernames {
     return result.toString("UTF-8");
   }
 
-  /*
-   * private static Cache<UUID, String> getCacher() {
-   * return CacheBuilder.newBuilder()
-   * .maximumSize(10000)
-   * .expireAfterWrite(7, TimeUnit.DAYS)
-   * .initialCapacity(10)
-   * .build(
-   * new CacheLoader<UUID, String>() {
-   * @Override
-   * public String load(UUID key) throws Exception {
-   * return null;
-   * }
-   * });
-   * }
-   */
+  @Nullable
+  private static UUID stringToUuid(@Nullable String uuid) {
+    if (uuid == null) {
+      return null;
+
+    } else if (uuid.length() == 36) {
+      return UUID.fromString(uuid);
+
+    } else if (uuid.length() >= 32) {
+      String uuidWithDashes = uuidWithDashesP.matcher(uuid).replaceAll("$1-$2-$3-$4-$5");
+      return UUID.fromString(uuidWithDashes);
+
+    } else {
+      return null;
+    }
+  }
 }
