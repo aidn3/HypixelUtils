@@ -1,5 +1,5 @@
 
-package com.aidn5.hypixelutils.v1.common.cache;
+package com.aidn5.hypixelutils.v1.tools.cache;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,6 +27,7 @@ import javax.annotation.Nullable;
  * 
  * @see com.google.common.cache.CacheBuilder
  */
+//TODO: let methods return boolean to determine the succession of the process.
 public interface ICacher<K, V> {
   /**
    * Create a new cache entry.

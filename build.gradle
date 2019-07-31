@@ -15,7 +15,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 
 version = "1.0"
 group= "com.aidn5.hypixelutils"
-archivesBaseName = "hypixelutils"
+archivesBaseName = "HypixelUtils"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

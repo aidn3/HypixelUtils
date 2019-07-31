@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 
 import net.minecraft.client.Minecraft;
@@ -51,8 +52,7 @@ public class Scoreboard {
    * @since 1.0
    * @see #getSidebarScores(Minecraft)
    */
-  @IHypixelUtils(
-      OnlyHypixel = true)
+  @IOnlyHypixel
   @Nonnull
   public static String gameServerTitle(@Nonnull Minecraft mc, @Nullable HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {

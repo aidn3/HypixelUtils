@@ -9,8 +9,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereamiWrapper;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
@@ -41,7 +42,8 @@ import net.minecraft.client.Minecraft;
  * @since 1.0
  * @version 1.0
  */
-@IHypixelUtils(OnlyHypixel = true)
+@IHypixelUtils
+@IOnlyHypixel
 // all methods of this class must never return null.
 public class ServerInstance {
   @Nonnull
@@ -142,7 +144,7 @@ public class ServerInstance {
    * @since 1.0
    * 
    * @see LobbyType#getLobbyTypePattern()
-   * @see WhereAmIWrapper
+   * @see WhereamiWrapper
    * @see ServerInstanceListener
    */
   @Nonnull
@@ -172,7 +174,7 @@ public class ServerInstance {
    * @since 1.0
    * 
    * @see ServerType#getServerTypePattern()
-   * @see WhereAmIWrapper
+   * @see WhereamiWrapper
    * @see ServerInstanceListener
    */
   @Nonnull
@@ -231,7 +233,7 @@ public class ServerInstance {
       throw new NotOnHypixelNetwork();
     }
 
-    ServerInstance newInstance = new ServerInstance();
+    final ServerInstance newInstance = new ServerInstance();
 
     if (whereami == null || whereami.isEmpty()) {
       return newInstance;
@@ -504,6 +506,19 @@ public class ServerInstance {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return com.google.common.base.Objects
+        .toStringHelper(this)
+        .add("serverType", getServerType())
+        .add("serverId", getServerId())
+        .add("lobbyType", getLobbyType())
+        .add("lobbyNumber", getLobbyNumber())
+        .add("gameMode", getGameMode())
+        .add("whereami", getWhereami())
+        .toString();
   }
 
   /**

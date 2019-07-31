@@ -16,7 +16,12 @@ import org.apache.commons.io.IOUtils;
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IForgeEvent;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IInterfaceEvent;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
@@ -46,7 +51,9 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent;
  * 
  * @category ListenerBus
  */
-@IHypixelUtils(OnlyHypixel = true)
+@IHypixelUtils
+@IOnlyHypixel
+@IEventListener
 public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
   @Nonnull
   private final HypixelUtils hypixelUtils;
@@ -81,6 +88,7 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    *          Event data
    * @see net.minecraftforge.event.world.WorldEvent.Load
    */
+  @IBackend
   @SubscribeEvent
   public void onJoinWorld(WorldEvent.Load event) {
     final String ip = getCurrentIP();
@@ -105,6 +113,7 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
     }, 20);
   }
 
+  @IBackend
   @SubscribeEvent
   public void onLoggedOut(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {
     runCallback(false, null, null);
@@ -328,7 +337,9 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    * @category EventListener
    */
   @FunctionalInterface
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
+  @IInterfaceEvent
   public interface OnHypixelCallback extends EventListener {
 
     /**
@@ -354,7 +365,8 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    * 
    * @author robere2
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
   public enum VerificationMethod {
     /**
      * the server has been confirmed to by hypixel network by its IP.
@@ -392,7 +404,9 @@ public final class OnHypixelListener extends ListenerBus<OnHypixelCallback> {
    * 
    * @category Event
    */
-  @IHypixelUtils(isForgeEvent = true, OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
+  @IForgeEvent
   public static class OnHypixelEvent extends Event {
     private final boolean onHypixel;
     @Nullable

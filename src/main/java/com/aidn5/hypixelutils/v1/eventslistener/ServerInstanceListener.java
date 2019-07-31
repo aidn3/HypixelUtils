@@ -4,12 +4,16 @@ package com.aidn5.hypixelutils.v1.eventslistener;
 import javax.annotation.Nonnull;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
-import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper.WhereAmICallback;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereamiWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereamiWrapper.WhereamiCallback;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
 import com.aidn5.hypixelutils.v1.common.annotation.IEventListener;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IForgeEvent;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IInterfaceEvent;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.OnHypixelCallback;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener.VerificationMethod;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener.ServerInstanceCallback;
@@ -38,7 +42,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * 
  * @category ListenerBus @category
  */
-@IHypixelUtils(OnlyHypixel = true)
+@IHypixelUtils
+@IOnlyHypixel
 @IEventListener
 public final class ServerInstanceListener extends ListenerBus<ServerInstanceCallback> {
   @Nonnull
@@ -49,7 +54,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
   // this callback will automatically be called
   // to inform the depended on listeners.
   @Nonnull
-  private final WhereAmICallback callback = new WhereAmICallback() {
+  private final WhereamiCallback callback = new WhereamiCallback() {
     @Override
     public void call(ServerType serverType, String serverName, String fullMessage) {
       runCallbacks(
@@ -69,7 +74,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
       public void onOnHypixelUpdate(boolean onHypixel, String ip, VerificationMethod method) {
         if (onHypixel) {
           MinecraftForge.EVENT_BUS.register(ServerInstanceListener.this);
-          new WhereAmIWrapper(callback, hypixelUtils);
+          new WhereamiWrapper(callback, hypixelUtils);
         } else {
           MinecraftForge.EVENT_BUS.unregister(ServerInstanceListener.this);
         }
@@ -92,10 +97,11 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
     return lastServerInstance;
   }
 
+  @IBackend
   @SubscribeEvent
   public void onWorldChange(WorldEvent.Load event) {
     if (hypixelUtils.onHypixel()) {
-      new WhereAmIWrapper(callback, hypixelUtils);
+      new WhereamiWrapper(callback, hypixelUtils);
     }
   }
 
@@ -105,6 +111,7 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * @param event
    *          the event, which contains the /whereami response
    */
+  @IBackend
   @SubscribeEvent(receiveCanceled = true) // in case other mod is using it and cancels it
   public void onPlayerChat(ClientChatReceivedEvent event) {
     if (event == null || event.type != 0 || !hypixelUtils.onHypixel()) {
@@ -145,7 +152,9 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * 
    * @category EventListener
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
+  @IInterfaceEvent
   @FunctionalInterface
   public interface ServerInstanceCallback extends EventListener {
     /**
@@ -169,7 +178,9 @@ public final class ServerInstanceListener extends ListenerBus<ServerInstanceCall
    * 
    * @category Event
    */
-  @IHypixelUtils(OnlyHypixel = true, isForgeEvent = true)
+  @IHypixelUtils
+  @IOnlyHypixel
+  @IForgeEvent
   public static class ServerInstanceEvent extends Event {
     private final ServerInstance serverInstance;
 

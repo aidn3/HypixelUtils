@@ -1,5 +1,5 @@
 
-package com.aidn5.hypixelutils.v1.common.cache;
+package com.aidn5.hypixelutils.v1.tools.cache;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

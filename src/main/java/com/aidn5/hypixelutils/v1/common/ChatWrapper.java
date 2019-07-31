@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
 import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.tools.buffer.ChatBuffer;
 
 import net.minecraft.client.Minecraft;
@@ -34,7 +35,7 @@ public class ChatWrapper {
    * <p>
    * used as an indicator because it has no effect.
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IOnlyHypixel
   public static final Pattern helloPattern = Pattern.compile("^Why hello there");
 
   /**
@@ -59,7 +60,7 @@ public class ChatWrapper {
    *          if <code>null</code> send it directly by
    *          <code>Minecraft.getMinecraft().thePlayer#sendChatMessage()</code>
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IOnlyHypixel
   public static void sendHelloCommand(@Nullable ChatBuffer cb) {
     if (cb != null) {
       cb.offer("/hello");

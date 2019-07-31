@@ -5,9 +5,9 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
-import com.aidn5.hypixelutils.v1.HypixelUtils;
-import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereamiWrapper;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 
 /**
@@ -25,8 +25,9 @@ import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
  * 
  * @category ServerInstance
  */
-@IHypixelUtils(OnlyHypixel = true)
-// all regex patterns must have one group
+@IHypixelUtils
+@IOnlyHypixel
+// all regex patterns must have one group()
 public enum ServerType {
   /**
    * The player is here probably because they are either AFK (idling)
@@ -57,7 +58,7 @@ public enum ServerType {
    */
   MEGAGAME("^You are currently connected to server (mega[a-zA-Z0-9]{1,5})"),
   /**
-   * The player is on hypixel network, but the {@link HypixelUtils} can not
+   * The player is on hypixel network, but {@link ServerInstance} can not
    * determine where is the player exactly at.
    * 
    * <p>
@@ -93,7 +94,7 @@ public enum ServerType {
    * 
    * @since 1.0
    * 
-   * @see WhereAmIWrapper
+   * @see WhereamiWrapper
    * @see ServerInstanceListener
    */
   @Nonnull

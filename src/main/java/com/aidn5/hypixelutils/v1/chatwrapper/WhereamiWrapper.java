@@ -7,15 +7,16 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
 import com.aidn5.hypixelutils.v1.common.annotation.IChatWrapper;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.serverinstance.ServerType;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -28,23 +29,28 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @since 1.0
  * 
  * @category ChatWrapper
+ * 
+ * @see "https://github.com/robere2/Quickplay2.0/blob/1.8.9/src/main/java/co/bugg/quickplay/util/WhereamiWrapper.java"
  */
-@IHypixelUtils(OnlyHypixel = true)
+/*
+ * The template of this wrapper is copied from
+ * "https://github.com/robere2/Quickplay2.0/blob/1.8.9/src/main/java/co/bugg/quickplay/util/WhereamiWrapper.java"
+ */
+@IHypixelUtils
+@IOnlyHypixel
 @IChatWrapper(usesLock = false)
-public class WhereAmIWrapper {
+public class WhereamiWrapper {
   /**
-   * how many times is /whereami sent.
-   * <p>
-   * Used to know how many times should the class cancel the message.
-   * so when the user manually sends the command, the message won't be canceled
-   * by the library.
+   * Whether this wrapper should listen for & action on chat messages.
    */
-  private int timesCommandSent = 0;
-
-  private boolean callbackSent = false;
+  boolean listening;
+  /**
+   * Whether this wrapper should cancel whereami messages it finds.
+   */
+  boolean cancel;
 
   @Nullable
-  private WhereAmICallback callback;
+  private WhereamiCallback callback;
 
   @Nonnull
   private final HypixelUtils hypixelUtils;
@@ -55,21 +61,28 @@ public class WhereAmIWrapper {
    * @param callback
    *          Callback when this wrapper finds a /whereami message
    * @param hypixelUtils
-   *          a library instance.
+   *          a library instance. if <code>null</code>
+   *          the default instance will be used.
    * 
    * @throws NotOnHypixelNetwork
    *           if the client was not connected to the hypixel network
    */
-  public WhereAmIWrapper(@Nullable WhereAmICallback callback, @Nonnull HypixelUtils hypixelUtils)
+  public WhereamiWrapper(@Nullable WhereamiCallback callback, @Nullable HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {
-    if (!hypixelUtils.onHypixel()) {
+
+    if (hypixelUtils != null) {
+      this.hypixelUtils = hypixelUtils;
+    } else {
+      this.hypixelUtils = HypixelUtils.defaultInstance();
+    }
+
+    if (!this.hypixelUtils.onHypixel()) {
       throw new NotOnHypixelNetwork();
     }
 
     this.callback = callback;
-    this.hypixelUtils = hypixelUtils;
-    MinecraftForge.EVENT_BUS.register(this);
 
+    MinecraftForge.EVENT_BUS.register(this);
 
     new TickDelay(this::sendCommand, 15);
     new TickDelay(this::sendCommand, 60);
@@ -77,53 +90,72 @@ public class WhereAmIWrapper {
   }
 
   /**
-   * Unregister this class from {@link MinecraftForge#EVENT_BUS}
-   * and {@link #callback} if {@link #callbackSent} is still <code>false</code>.
+   * Stop listening for /whereami and callback with empty response.
+   * This method has no effect if the callback has already been made.
    */
   public void stopListening() {
+    stopListening(ServerType.UNKNOWN, "", "");
+  }
+
+  /**
+   * Unregister this class from {@link MinecraftForge#EVENT_BUS}
+   * and {@link #callback} if {@link #listening} is still <code>true</code>.
+   * 
+   * @param serverType
+   *          what type of server is the client connected to.
+   * @param serverName
+   *          the server name the client connected to. e.g. "swlobby123",
+   *          "mini12J". <u>might be empty but never <code>null</code></u>
+   * @param fullMessage
+   *          the message which is used to detect serverType and serverName.
+   *          Useful for debugging
+   *          <u>might be empty but never <code>null</code></u>
+   * 
+   */
+  private synchronized void stopListening(@Nonnull ServerType serverType,
+      @Nonnull String serverName, @Nonnull String fullMessage) {
+
     MinecraftForge.EVENT_BUS.unregister(this);
 
-    if (!callbackSent && callback != null) {
-      callbackSent = true;
+    if (!listening) {
+      return;
+    }
 
+    listening = false;
+
+    if (callback != null) {
       hypixelUtils.threadPool.submit(() -> {
-        callback.call(ServerType.UNKNOWN, "", "");
+        callback.call(serverType, serverName, fullMessage);
       });
     }
   }
 
   private void sendCommand() {
-    timesCommandSent++;
     hypixelUtils.chatBuffer.add("/whereami");
   }
 
-  @SubscribeEvent(priority = EventPriority.LOW, receiveCanceled = true)
+  @IBackend
+  @SubscribeEvent(receiveCanceled = true)
   public void onPlayerChat(ClientChatReceivedEvent event) {
-    if (event == null || event.type != 0 || !hypixelUtils.onHypixel()) {
+    if (!hypixelUtils.onHypixel()) {
+      stopListening();
+    }
+
+    if (event == null || event.type != 0) {
       return;
     }
+
     final String message = event.message.getUnformattedText();
 
     for (ServerType serverType : ServerType.values()) {
       Matcher matcher = serverType.getWhereAmIPattern().matcher(message);
+
       if (matcher.find()) {
-        if (!event.isCanceled()) {
-          if (timesCommandSent > 0) {
-            timesCommandSent--;
-            event.setCanceled(true);
-          }
+        if (cancel) {
+          event.setCanceled(true);
         }
 
-        if (!callbackSent && callback != null) {
-          callbackSent = true;
-          hypixelUtils.threadPool.submit(() -> {
-            callback.call(serverType, matcher.group(1), message);
-          });
-        }
-
-        if (timesCommandSent <= 0) {
-          stopListening();
-        }
+        stopListening(serverType, matcher.group(1), message);
         return;
       }
     }
@@ -131,16 +163,17 @@ public class WhereAmIWrapper {
 
   /**
    * The interface to use to receive the callback
-   * when the process of {@link WhereAmIWrapper} is finished.
+   * when the process of {@link WhereamiWrapper} is finished.
    * 
    * @author aidn5
    * 
    * @version 1.0
    * @since 1.0
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
   @FunctionalInterface
-  public interface WhereAmICallback {
+  public interface WhereamiCallback {
     /**
      * callback on a separate thread when the message is found in the chat.
      * 

@@ -2,9 +2,7 @@
 package com.aidn5.hypixelutils.v1.tools;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 import javax.annotation.Nonnull;
 
@@ -36,59 +34,13 @@ public class ReflectionUtil extends ReflectionHelper {
   }
 
   /**
-   * Get field "name" from class "clazz" and
-   * handle any universal modifications to it.
-   * 
-   * @param clazz
-   *          Class to get field from
-   * @param name
-   *          Name of field to get
-   * @return The field
-   * 
-   * @throws NoSuchFieldException
-   *           The field doesn't exist
-   * 
-   * @since 1.0
-   */
-  @Nonnull
-  public static Field getField(@Nonnull Class<?> clazz, @Nonnull String name)
-      throws NoSuchFieldException {
-    Field field = clazz.getField(name);
-    field.setAccessible(true);
-    return field;
-  }
-
-  /**
-   * Get method "name" from class "clazz" and
-   * handle any universal modifications to it.
-   * 
-   * @param clazz
-   *          Clazz to get the method from
-   * @param name
-   *          Name of the method to get
-   * @return The method
-   * 
-   * @throws NoSuchMethodException
-   *           The method doesn't exist
-   * 
-   * @since 1.0
-   */
-  @Nonnull
-  public static Method getMethod(@Nonnull Class<?> clazz, @Nonnull String name)
-      throws NoSuchMethodException {
-    Method method = clazz.getMethod(name);
-    method.setAccessible(true);
-    return method;
-  }
-
-  /**
    * Create new instance of a class from its private constructor.
    * 
    * @param clazz
    *          the class to create new instance of it
    * 
    * @return
-   *         the new instance of the given class
+   *         a new instance of the given class
    * 
    * @throws ReflectiveOperationException
    *           if any reflection error occurs
@@ -101,6 +53,36 @@ public class ReflectionUtil extends ReflectionHelper {
     Constructor<T> c = clazz.getDeclaredConstructor();
     c.setAccessible(true);
     return c.newInstance();
+  }
+
+  /**
+   * Create new instance of a class from its private constructor.
+   * 
+   * @param clazz
+   *          the class to create new instance of
+   * 
+   * @param parameters
+   *          the given parameters to the class
+   * 
+   * @return a new instance of the given class
+   * 
+   *         ReflectiveOperationException
+   *         if any reflection error occurs
+   * 
+   * @since 1.0
+   */
+  public static <T> T newInstance(@Nonnull Class<T> clazz, @Nonnull Object... parameters)
+      throws ReflectiveOperationException {
+
+    Class<?>[] parameterTypes = new Class<?>[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      parameterTypes[i] = parameters[i].getClass();
+    }
+
+    Constructor<T> c = clazz.getDeclaredConstructor(parameterTypes);
+    c.setAccessible(true);
+
+    return c.newInstance(parameters);
   }
 
   /**
@@ -117,7 +99,8 @@ public class ReflectionUtil extends ReflectionHelper {
    */
   @Nonnull
   public static String getMcVersion() throws NoSuchFieldException, IllegalAccessException {
-    return (String) getField(ForgeVersion.class, "mcVersion").get(null);
+    getPrivateValue(ForgeVersion.class, null, "mcVersion");
+    return (String) findField(ForgeVersion.class, "mcVersion").get(null);
   }
 
   /**
@@ -137,6 +120,8 @@ public class ReflectionUtil extends ReflectionHelper {
   @Nonnull
   public static String getForgeVersion()
       throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-    return (String) getMethod(ForgeVersion.class, "getVersion").invoke(null);
+    return (String) findMethod(ForgeVersion.class, null, new String[] { "getVersion" })
+        .invoke(null);
+
   }
 }

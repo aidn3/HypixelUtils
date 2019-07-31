@@ -3,10 +3,7 @@ package com.aidn5.hypixelutils.v1;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
@@ -18,29 +15,42 @@ import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.aidn5.hypixelutils.v1.chatsocket.ChatSocketFactory;
+import com.aidn5.hypixelutils.v1.chatsocket.client.RequestReceiveEvent.RequestReceived;
+import com.aidn5.hypixelutils.v1.chatsocket.client.RequestSendEvent;
+import com.aidn5.hypixelutils.v1.chatsocket.protocols.BaseProtocol;
+import com.aidn5.hypixelutils.v1.chatsocket.wrapper.RequestWrapper;
 import com.aidn5.hypixelutils.v1.chatwrapper.MapWrapper;
-import com.aidn5.hypixelutils.v1.chatwrapper.WhereAmIWrapper;
+import com.aidn5.hypixelutils.v1.chatwrapper.WhereamiWrapper;
 import com.aidn5.hypixelutils.v1.common.ChatWrapper;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
-import com.aidn5.hypixelutils.v1.common.StatisticsBase;
+import com.aidn5.hypixelutils.v1.common.analytics.McStatistics;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
-import com.aidn5.hypixelutils.v1.common.cache.DbCacher;
-import com.aidn5.hypixelutils.v1.common.cache.ICacher;
-import com.aidn5.hypixelutils.v1.common.cache.JsonCacher;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.HypixelApiListener;
 import com.aidn5.hypixelutils.v1.eventslistener.OnHypixelListener;
 import com.aidn5.hypixelutils.v1.eventslistener.ServerInstanceListener;
 import com.aidn5.hypixelutils.v1.exceptions.HypixelUtilsInternalError;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
+import com.aidn5.hypixelutils.v1.players.NotValidUsername;
+import com.aidn5.hypixelutils.v1.players.Player;
 import com.aidn5.hypixelutils.v1.players.UsernameCache;
 import com.aidn5.hypixelutils.v1.serverinstance.ServerInstance;
 import com.aidn5.hypixelutils.v1.tools.AssetHelper;
 import com.aidn5.hypixelutils.v1.tools.ReflectionUtil;
 import com.aidn5.hypixelutils.v1.tools.Scoreboard;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
+import com.aidn5.hypixelutils.v1.tools.TimeOut;
 import com.aidn5.hypixelutils.v1.tools.buffer.ChatBuffer;
 import com.aidn5.hypixelutils.v1.tools.buffer.MessageBuffer;
+import com.aidn5.hypixelutils.v1.tools.cache.DbCacher;
+import com.aidn5.hypixelutils.v1.tools.cache.ICacher;
+import com.aidn5.hypixelutils.v1.tools.cache.JsonCacher;
+import com.aidn5.hypixelutils.v1.tools.io.buffer.ByteBufferNetInput;
+import com.aidn5.hypixelutils.v1.tools.io.buffer.ByteBufferNetOutput;
+import com.aidn5.hypixelutils.v1.tools.io.stream.StreamNetInput;
+import com.aidn5.hypixelutils.v1.tools.io.stream.StreamNetOutput;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -53,10 +63,16 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * 
  * <p>
  * <i><u>Most</u> of the library features/services are provided by THIS class
- * and accessible either
- * by static method like {@link #createTickDelay(Runnable)} or from
+ * and accessible either by static method like
+ * {@link #createTickDelay(Runnable)} or from
  * {@link #defaultInstance()}/{@link #newInstance(Minecraft, String)}</i>
  * 
+ * <p>
+ * <h3>Grand-Features</h3> (Big/good features)
+ * <ul>
+ * <li>{@link ServerInstance}</li>
+ * <li>{@link ChatSocketFactory}</li>
+ * </ul>
  * 
  * <p>
  * <h3>Buffer-tools/thread-Tools:</h3>
@@ -76,14 +92,13 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * <i>Note: Every Wrapper has its own inline callback interface.</i>
  * <ul>
  * <li>{@link MapWrapper}</li>
- * <li>{@link WhereAmIWrapper}</li>
+ * <li>{@link WhereamiWrapper}</li>
  * </ul>
  * 
  * 
  * <p>
  * <h3>Listeners/Events bus:</h3> (Used to give an easy way to listen to
- * specific changes/events
- * which are usually used in many mods)<br>
+ * specific changes/events which are usually used in many mods)<br>
  * <b>Notes:</b><br>
  * - All Callbacks from listeners are extended from {@link EventListener}<br>
  * - You can register to a listener with
@@ -102,24 +117,38 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * <h3>Help-Tools:</h3> (These tools are common to use in minecraft mods. In
  * hypixel network or somewhere else)<br>
  * <i>Note: These can either be accessed directly or through
- * {@link HypixelUtils}'s static
- * methods</i>
+ * {@link HypixelUtils}'s static methods</i>
  * <ul>
+ * <li>{@link ChatSocketFactory}</li>
  * <li>{@link TickDelay}</li>
  * <li>{@link ReflectionUtil}</li>
- * <li>{@link AssetHelper}</li>
  * <li>{@link UsernameCache}</li>
  * <li>{@link JsonCacher}</li>
  * <li>{@link DbCacher}</li>
  * <li>{@link Scoreboard}</li>
  * <li>{@link ChatWrapper}</li>
+ * <li>{@link TimeOut}</li>
+ * <li>{@link Player}</li>
  * </ul>
+ * 
+ * <p>
+ * <h3>IO-Tools</h3> (These classes help with reading/writing/parsing
+ * streams/buffers/etc.)
+ * <ul>
+ * <li>{@link AssetHelper}</li>
+ * <li>{@link ByteBufferNetInput}</li>
+ * <li>{@link ByteBufferNetOutput}</li>
+ * <li>{@link StreamNetInput}</li>
+ * <li>{@link StreamNetOutput}</li>
+ * </ul>
+ * 
  * 
  * <p>
  * <h3>Exceptions:</h3> (These exceptions are provided/used in the library.)
  * <ul>
  * <li>{@link NotOnHypixelNetwork}</li>
  * <li>{@link HypixelUtilsInternalError}</li>
+ * <li>{@link NotValidUsername}</li>
  * </ul>
  * 
  * @author aidn5
@@ -128,45 +157,36 @@ import net.minecraftforge.fml.common.eventhandler.Event;
  * @since 1.0
  */
 // TODO: create logger and use it to log
-// TODO: add license for aidn5 and robere2
 // TODO: add the licenses to the build along with README.md
+// TODO: add package-info.java and javadoc to tools.**, players.**,
 @IHypixelUtils
 public final class HypixelUtils {
   private static final Logger LOGGER = Logger.getLogger(HypixelUtils.class.getName());
 
   /**
-   * a Provided instance of the library used to register listeners, push elements
-   * to the buffer and
-   * to execute code blocks.
+   * Name of the library to display.
    */
-  // idea make a shared instance between all the mods.
-  // so all mods work together
-  // Benefits: reduce the amount of events
-  // if 5 mods are using the mod at the same time and all of them want to receive
-  // an event when changing the world by sending a command, the command will
-  // probably be sent at least 5 times at the same time,
-  // which will result in a blocking from the server side
-  // with the message "Please don't spam the command!"
+  public static final String NAME = "HypixelUtils";
+  /**
+   * the id of the library. used to identify the library in forge as a mod.
+   */
   @Nonnull
-  private static final HypixelUtils INSTANCE = new HypixelUtils(Minecraft.getMinecraft(), null);
-
+  public static final String MODID = "hypixelutils";
   /**
    * The current version of the library.
-   * 
-   * @since 1.0
    */
   @Nonnull
   public static final String VERSION = "1.0";
   /**
-   * the id of the library.
-   * 
-   * <p>
-   * used to identify the library in forge as a mod.
-   * 
-   * @since 1.0
+   * The authors of the library.
    */
   @Nonnull
-  public static final String MODID = "hypixelutils";
+  public static final String[] AUTHORS = new String[] { "aidn5" };
+  /**
+   * Credits for other people, who made this library possible.
+   */
+  @Nonnull
+  public static final String CREDITS = "robere2";
 
   /**
    * the id of the mod, which created this instance. if <code>null</code> then
@@ -183,7 +203,7 @@ public final class HypixelUtils {
    * Instance of minecraft.
    */
   @Nonnull
-  private final Minecraft mc;
+  public final Minecraft mc;
 
   /**
    * Thread pool for blocking code.
@@ -193,7 +213,23 @@ public final class HypixelUtils {
    * @see Executors#newCachedThreadPool()
    */
   @Nonnull
-  public final ExecutorService threadPool = Executors.newCachedThreadPool();
+  public static final ExecutorService threadPool = Executors.newCachedThreadPool();
+
+  /**
+   * a Provided instance of the library used to register listeners, push elements
+   * to the buffer.
+   */
+  // idea make a shared instance between all the mods.
+  // so all mods work together
+  // Benefits: reduce the amount of events
+  // if 5 mods are using the mod at the same time and all of them want to receive
+  // an event when changing the world by sending a command, the command will
+  // probably be sent at least 5 times at the same time,
+  // which will result in a blocking from the server side
+  // with the message "Please don't spam the command!"
+  @Nonnull
+  private static final HypixelUtils INSTANCE = new HypixelUtils(Minecraft.getMinecraft(), null);
+
   /**
    * Buffer for sending chat messages to the server.
    * 
@@ -225,6 +261,7 @@ public final class HypixelUtils {
    * @see ListenerBus
    */
   @Nonnull
+  @IOnlyHypixel
   public final OnHypixelListener onHypixelListener;
 
   /**
@@ -315,20 +352,9 @@ public final class HypixelUtils {
       // create instances of the listeners
       // note: these listeners MUST be created in this sequence!
       // they are depended on each other, otherwise NullPointerException
-      Constructor<OnHypixelListener> onC = OnHypixelListener.class
-          .getDeclaredConstructor(HypixelUtils.class);
-      onC.setAccessible(true);
-      onHypixelListener = onC.newInstance(this);
-
-      Constructor<HypixelApiListener> onA = HypixelApiListener.class
-          .getDeclaredConstructor(HypixelUtils.class);
-      onA.setAccessible(true);
-      hypixelApiListener = onA.newInstance(this);
-
-      Constructor<ServerInstanceListener> onW = ServerInstanceListener.class
-          .getDeclaredConstructor(HypixelUtils.class);
-      onW.setAccessible(true);
-      serverInstanceListener = onW.newInstance(this);
+      onHypixelListener = reflectionNewInstance(OnHypixelListener.class, this);
+      hypixelApiListener = reflectionNewInstance(HypixelApiListener.class, this);
+      serverInstanceListener = reflectionNewInstance(ServerInstanceListener.class, this);
 
 
       // register the listeners to start receive events
@@ -338,13 +364,13 @@ public final class HypixelUtils {
       MinecraftForge.EVENT_BUS.register(serverInstanceListener);
 
 
-      // start any service which needs a stand alone thread
+      // start any service which needs a stand-alone thread
       chatBuffer.start();
       messageBuffer.start();
 
 
       // start tracking the usage of this library.
-      StatisticsBase.registerMcClientLibrary(
+      McStatistics.registerMcClientLibrary(
           MODID, VERSION, modid,
           "Forge", mc.getVersion(),
           mc.getSession().getProfile().getId());
@@ -469,6 +495,48 @@ public final class HypixelUtils {
   }
 
   /**
+   * Check whether the username is a valid minecraft-username.
+   * 
+   * @param username
+   *          the username to validate.
+   * 
+   * @return <code>true</code> if the username is valid.
+   * 
+   * @see Player
+   * @see Player#isValidUsername(String)
+   */
+  public static boolean isValidUsername(@Nullable String username) {
+    return Player.isValidUsername(username);
+  }
+
+  /**
+   * Check whether the username is valid as a minecraft-username.
+   * <p>
+   * <b>Usage Example:</b>
+   * <code>
+   * void method(String username) throws IllegalArgumentException {
+   *     this.username = validateUsername(username);
+   * }
+   * </code>
+   * 
+   * @param username
+   *          the username to validate
+   * 
+   * @return
+   *         returns {@code username} back.
+   * 
+   * @throws NotValidUsername
+   *           if the username is not valid with {@link Exception#getMessage()}
+   *           for the reason.
+   * @see Player
+   * @see Player#validateUsername(String)
+   */
+  @Nonnull
+  public static String validateUsername(@Nullable String username) throws NotValidUsername {
+    return Player.validateUsername(username);
+  }
+
+  /**
    * get file's content as {@link String} from the resources.
    * 
    * @param clazz
@@ -518,56 +586,6 @@ public final class HypixelUtils {
   }
 
   /**
-   * Get field "name" from class "clazz" and handle any universal modifications to
-   * it.
-   * 
-   * @param clazz
-   *          Class to get field from
-   * @param name
-   *          Name of field to get
-   * @return The field
-   * 
-   * @throws NoSuchFieldException
-   *           The field doesn't exist
-   * 
-   * @since 1.0
-   * 
-   * @category ReflectionUtil
-   * 
-   * @see ReflectionUtil#getField(Class, String)
-   */
-  @Nonnull
-  public static Field reflectionGetField(@Nonnull Class<?> clazz, @Nonnull String name)
-      throws NoSuchFieldException {
-    return ReflectionUtil.getField(clazz, name);
-  }
-
-  /**
-   * Get method "name" from class "clazz" and handle any universal modifications
-   * to it.
-   * 
-   * @param clazz
-   *          Clazz to get the method from
-   * @param name
-   *          Name of the method to get
-   * @return The method
-   * 
-   * @throws NoSuchMethodException
-   *           The method doesn't exist
-   * 
-   * @since 1.0
-   * 
-   * @category ReflectionUtil
-   *
-   * @see ReflectionUtil#getMethod(Class, String)
-   */
-  @Nonnull
-  public static Method reflectionGetMethod(@Nonnull Class<?> clazz, @Nonnull String name)
-      throws NoSuchMethodException {
-    return ReflectionUtil.getMethod(clazz, name);
-  }
-
-  /**
    * Create new instance of a class from its private constructor.
    * 
    * @param clazz
@@ -588,6 +606,29 @@ public final class HypixelUtils {
   public static <T> T reflectionNewInstance(@Nonnull Class<T> clazz)
       throws ReflectiveOperationException {
     return ReflectionUtil.newInstance(clazz);
+  }
+
+  /**
+   * Create new instance of a class from its private constructor.
+   * 
+   * @param clazz
+   *          the class to create new instance of
+   * 
+   * @param parameters
+   *          the given parameters to the class
+   * 
+   * @return a new instance of the given class
+   * 
+   *         ReflectiveOperationException
+   *         if any reflection error occurs
+   * 
+   * @since 1.0
+   * 
+   * @see ReflectionUtil#newInstance(Class, Object...)
+   */
+  public static <T> T reflectionNewInstance(@Nonnull Class<T> clazz, @Nonnull Object... parameters)
+      throws ReflectiveOperationException {
+    return ReflectionUtil.newInstance(clazz, parameters);
   }
 
   /**
@@ -663,6 +704,7 @@ public final class HypixelUtils {
    * @see Scoreboard#gameServerTitle(Minecraft, HypixelUtils)
    * @see Scoreboard#getSidebarScores(Minecraft)
    */
+  @IOnlyHypixel
   @Nonnull
   public static String gameServerTitle(@Nonnull Minecraft mc, @Nullable HypixelUtils hypixelUtils)
       throws NotOnHypixelNetwork {
@@ -684,6 +726,7 @@ public final class HypixelUtils {
    * @param durationUnit
    *          the unit that {@code duration} is expressed in
    * 
+   * @see JsonCacher
    */
   public static <T> JsonCacher<T> newJsonCacher(@Nullable File cacheFilePath, int duration,
       TimeUnit durationUnit) {
@@ -706,15 +749,19 @@ public final class HypixelUtils {
   }
 
   /**
-   * schedule the gui to be displayed on the screen.
-   * The gui will be displayed after one tick.
+   * schedule the GUI to be displayed on the screen.
+   * The GUI will be displayed after one tick.
    * 
    * <p>
    * Useful to use after processing command,
    * which is triggered by the chat-command.
    * 
    * @param gui
-   *          the gui to display
+   *          the GUI to display
+   * 
+   * @see #createTickDelay(Runnable, int)
+   * @see TickDelay
+   * @see Minecraft#displayGuiScreen(GuiScreen)
    */
   public static void displayGui(GuiScreen gui) {
     createTickDelay(() -> {
@@ -722,4 +769,103 @@ public final class HypixelUtils {
     }, 1);
   }
 
+  /**
+   * Register a listener to start receiving connection requests.
+   * 
+   * @param modid
+   *          the id of the listener to be called to.
+   *          Must be between 3 and 16 length.
+   * @param callback
+   *          a callback to notify when a new connection is incoming.
+   * 
+   * @throws IllegalArgumentException
+   *           if {@code modid} is null, shorter than 3 or longer than 16,
+   *           or {@code callback} is <code>null</code>.
+   * 
+   * @see ChatSocketFactory#registerListener(String, RequestReceived)
+   * @see ChatSocketFactory
+   */
+  public static void ChatSocketRegisterListener(@Nonnull String modid,
+      @Nonnull RequestReceived callback) throws IllegalArgumentException {
+    ChatSocketFactory.registerListener(modid, callback);
+  }
+
+  /**
+   * Remove a listener and stop receiving incoming connections.
+   * 
+   * @param modid
+   *          the id to stop listening to.
+   * @return
+   *         the registered callback to this id,
+   *         or <code>null</code>
+   * 
+   * @see ChatSocketFactory#unregisterListener(String)
+   * @see ChatSocketFactory
+   */
+  @Nonnull
+  public static RequestReceived ChatSocketUnregisterListener(@Nonnull String modid) {
+    return ChatSocketFactory.unregisterListener(modid);
+  }
+
+  /**
+   * Register new protocol for other servers. See {@link BaseProtocol} for further
+   * information about the Protocols specifications.
+   * 
+   * 
+   * @param protocolClass
+   *          protocol class to register.
+   * @throws RuntimeException
+   *           if an exception is encountered while registering the protocol.
+   * 
+   * @see ChatSocketFactory#registerProtocol(Class)
+   * @see ChatSocketFactory
+   */
+  public static void ChatSocketRegisterProtocol(
+      @Nonnull Class<? extends BaseProtocol> protocolClass) throws RuntimeException {
+    ChatSocketFactory.registerProtocol(protocolClass);
+  }
+
+  /**
+   * Initiate new request connection to use.
+   * 
+   * @param modid
+   *          the id of the listener to request when connecting.
+   * @param actionId
+   *          the action to do with the listener.
+   * 
+   * @return
+   *         an instance, which can be used to send requests.
+   * 
+   * @see ChatSocketFactory#createRequest(String, String)
+   * @see ChatSocketFactory
+   */
+  public static RequestSendEvent ChatSocketCreateRequest(@Nonnull String modid, String actionId) {
+    return ChatSocketFactory.createRequest(modid, actionId);
+  }
+
+  /**
+   * Create an instance and make it listen to the id. This instance has the
+   * feature to register an individual listener to every action instead of
+   * listening to all actions with the same id. It also notify the user for new
+   * requests and provides a callback, when the user accept the request connection
+   * through chat<i><u>. This will remove any current listener, which is
+   * registered at this moment.</u></i>
+   * 
+   * @param modid
+   *          the id of the requests to listen to.
+   * @param displayChatName
+   *          the name to display on the chat when a new request is incoming and
+   *          approve is required from the player to connect.
+   * 
+   * @return
+   *         a registered instance.
+   * 
+   * @see ChatSocketFactory#createWrapper(String, String)
+   * @see ChatSocketFactory#registerListener(String, RequestReceived)
+   * @see ChatSocketFactory
+   */
+  public static RequestWrapper ChatSocketCreateWrapper(@Nonnull String modid,
+      @Nonnull String displayChatName) {
+    return ChatSocketFactory.createWrapper(modid, displayChatName);
+  }
 }

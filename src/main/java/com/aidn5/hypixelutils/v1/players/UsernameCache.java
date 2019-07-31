@@ -18,9 +18,9 @@ import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.common.annotation.IHelpTools;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
-import com.aidn5.hypixelutils.v1.common.cache.CachedSet;
-import com.aidn5.hypixelutils.v1.common.cache.ICacher;
-import com.aidn5.hypixelutils.v1.common.cache.JsonCacher;
+import com.aidn5.hypixelutils.v1.tools.cache.CachedSet;
+import com.aidn5.hypixelutils.v1.tools.cache.ICacher;
+import com.aidn5.hypixelutils.v1.tools.cache.JsonCacher;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;

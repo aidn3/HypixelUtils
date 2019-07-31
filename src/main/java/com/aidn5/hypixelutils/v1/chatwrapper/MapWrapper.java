@@ -8,8 +8,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.aidn5.hypixelutils.v1.HypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
 import com.aidn5.hypixelutils.v1.common.annotation.IChatWrapper;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.exceptions.NotOnHypixelNetwork;
 import com.aidn5.hypixelutils.v1.tools.TickDelay;
 
@@ -30,7 +32,12 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * 
  * @category ChatWrapper
  */
-@IHypixelUtils(OnlyHypixel = true)
+/*
+ * The template of this wrapper is copied from
+ * "https://github.com/robere2/Quickplay2.0/blob/1.8.9/src/main/java/co/bugg/quickplay/util/WhereamiWrapper.java"
+ */
+@IHypixelUtils
+@IOnlyHypixel
 @IChatWrapper(usesLock = false)
 public class MapWrapper {
 
@@ -121,6 +128,7 @@ public class MapWrapper {
     }
   }
 
+  @IBackend
   @SubscribeEvent(receiveCanceled = true, priority = EventPriority.LOW)
   public void onChat(ClientChatReceivedEvent event) {
     if (!listening) {
@@ -163,7 +171,8 @@ public class MapWrapper {
    * @since 1.0
    */
   @FunctionalInterface
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
   public interface MapCallback {
     /**
      * callback on a separate thread when the message is found in the chat.

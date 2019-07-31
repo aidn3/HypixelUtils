@@ -12,7 +12,12 @@ import javax.annotation.Nullable;
 import com.aidn5.hypixelutils.v1.HypixelUtils;
 import com.aidn5.hypixelutils.v1.common.EventListener;
 import com.aidn5.hypixelutils.v1.common.ListenerBus;
+import com.aidn5.hypixelutils.v1.common.annotation.IBackend;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IForgeEvent;
+import com.aidn5.hypixelutils.v1.common.annotation.IEventListener.IInterfaceEvent;
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 import com.aidn5.hypixelutils.v1.eventslistener.HypixelApiListener.HypixelApiCallback;
 
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
@@ -34,7 +39,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  * @category ChatReader
  * @category ListenerBus
  */
-@IHypixelUtils(OnlyHypixel = true)
+@IHypixelUtils
+@IOnlyHypixel
+@IEventListener
 public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
   @Nonnull
   private static final Pattern apiPattern = Pattern
@@ -60,6 +67,7 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
     return api;
   }
 
+  @IBackend
   @SubscribeEvent
   public void onPlayerChatReceive(ClientChatReceivedEvent event) {
     if (hypixelUtils.onHypixel() && event != null && event.type == 0) {
@@ -103,8 +111,10 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
    * 
    * @category EventListener
    */
-  @IHypixelUtils(OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
   @FunctionalInterface
+  @IInterfaceEvent
   public interface HypixelApiCallback extends EventListener {
     /**
      * callback on a separate thread
@@ -128,7 +138,9 @@ public final class HypixelApiListener extends ListenerBus<HypixelApiCallback> {
    * 
    * @category Event
    */
-  @IHypixelUtils(isForgeEvent = true, OnlyHypixel = true)
+  @IHypixelUtils
+  @IOnlyHypixel
+  @IForgeEvent
   public static class HypixelApiEvent extends Event {
     @Nonnull
     private final UUID hypixelApi;

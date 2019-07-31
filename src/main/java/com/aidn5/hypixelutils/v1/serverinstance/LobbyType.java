@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
+import com.aidn5.hypixelutils.v1.common.annotation.IOnlyHypixel;
 
 /**
  * Indicates the type of the lobby the client is connected to.
@@ -28,7 +29,8 @@ import com.aidn5.hypixelutils.v1.common.annotation.IHypixelUtils;
  * 
  * @see ServerType#LOBBY
  */
-@IHypixelUtils(OnlyHypixel = true)
+@IHypixelUtils
+@IOnlyHypixel
 public enum LobbyType {
   MAIN_LOBBY("", "Main Lobby"), // main lobby has no codename.
   ARCADE_GAMES("arcade", "Arcade Games"),

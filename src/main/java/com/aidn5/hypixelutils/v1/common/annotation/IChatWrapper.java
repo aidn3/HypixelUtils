@@ -2,6 +2,10 @@
 package com.aidn5.hypixelutils.v1.common.annotation;
 
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 import com.aidn5.hypixelutils.v1.common.ChatWrapper;
 
@@ -25,10 +29,12 @@ import com.aidn5.hypixelutils.v1.common.ChatWrapper;
 @Documented
 @IBackend
 @IHypixelUtils
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface IChatWrapper {
   /**
    * Define whether this wrapper does complicated/long process that needs to hold
-   * the lock to prevent other instances from working till it finished.
+   * the lock to prevent other instances from working till it finishes.
    */
   public boolean usesLock();
 }
